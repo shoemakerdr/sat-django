@@ -1,0 +1,39 @@
+body {
+  margin: 0;
+}
+
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.title {
+  display: inline-block;
+  margin: 0;
+  font-family: monospace;
+  font-size: 80px;
+  color: #1c476b;
+}
+
+.logo {
+  display: inline-block;
+  margin-right: -8px;
+  height: 48px;
+}
+
+.nav-buttons {
+  margin-right: 32px;
+}
+
+.nav-link {
+  margin: 0 16px;
+  text-decoration: none;
+  font-family: monospace;
+  font-size: 24px;
+  color: #1c476b;
+}
+
+.nav-link:hover {
+  color: #72acdc;
+}

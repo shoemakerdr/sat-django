@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+{% block title %}
+  Login
+{% endblock %}
+
+{% block content %}
+
+<form role='form' action='{% url "floorplans_login" %}' method='POST'>
+  {% csrf_token %}
+
+  <p>Please login</p>
+
+  {{ form }}
+
+  <button type='submit' class='button'>Sign in</button>
+</form>
+
+{% endblock %}
