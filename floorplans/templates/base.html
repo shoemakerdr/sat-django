@@ -4,11 +4,12 @@
 <html>
   <head>
     <title>Floorplan App</title>
+    <link href='{% static "floorplans/style.css" %}' rel='stylesheet'>
   </head>
   <body>
     <div>
-      <h2 style='display:inline-block;font-size:48px;'>Sat</h2>
-      <img src='{% static "floorplans/chair.svg" %}' alt='chair' height='40px' style='display:inline-block;'/>
+      <img class='logo' src='{% static "floorplans/chair.svg" %}' alt='chair' />
+      <h2 class='title'>Sat</h2>
     </div>
     <div class='container'>
       {% block content %}
