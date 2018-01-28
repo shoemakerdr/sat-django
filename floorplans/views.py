@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from django.contrib.auth.decorators import login_required
 
+from floorplans.models import FloorPlan, Location
 
 
 def index(request):
@@ -10,7 +11,13 @@ def index(request):
 
 @login_required
 def dashboard(request):
-    return render(request, 'floorplans/dashboard.html')
+    floorplans = FloorPlan.objects.filter(user=request.user)
+    context = {
+        'floorplans': floorplans
+    }
+    return render(request,
+                  'floorplans/dashboard.html',
+                  context)
 
 
 def view_floorplan(request, floorplan_id):
