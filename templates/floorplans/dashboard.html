@@ -8,4 +8,15 @@
 
 <h1>Welcome to your dashboard, {{user.username}}</h1>
 
+<h3>Here are your floor plans: </h3>
+{% if floorplans %}
+  <ul>
+    {% for floorplan in floorplans %}
+    <li><a href='/floorplan/view/{{floorplan.id}}'>{{floorplan.name}}</a></li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p>You have no floor plans at the moment.</p>
+{% endif %}
+
 {% endblock %}
