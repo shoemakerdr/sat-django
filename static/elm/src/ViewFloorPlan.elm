@@ -1,8 +1,37 @@
-import Html exposing (Html, div, text, img, p, a, h1)
-import Html.Attributes exposing (src, alt, class, style)
-import Html.Events exposing (onClick)
+import Html exposing
+  ( Html
+  , Attribute
+  , div
+  , text
+  , p
+  , h1
+  , button
+  , input
+  , select
+  , option
+  )
+import Html.Attributes exposing
+  ( src
+  , alt
+  , class
+  , style
+  , disabled
+  , selected
+  , placeholder
+  , value
+  )
+import Html.Events exposing (onClick, on, targetValue)
 import Svg exposing (svg, circle)
-import Svg.Attributes as SvgAttr exposing (width, height, cx, cy, r, fill, fillOpacity)
+import Svg.Attributes as SvgAttr exposing
+  ( width
+  , height
+  , cx
+  , cy
+  , r
+  , fill
+  , fillOpacity
+  )
+import Json.Decode as Json
 
 import FloorPlanTypes exposing (..)
 
@@ -18,9 +47,20 @@ main =
     }
 
 
+defaultSelect : String
+defaultSelect = "-- Select type --"
+
+
 init : (Model, Cmd Msg)
 init =
-  (Model floorplanSample locationListSample) ! []
+  { floorplan = floorplanSample
+  , locations  = locationListSample
+  , filterNameInput = ""
+  , filterTypeSelect = defaultSelect
+  , toolTip = NotShown
+  , filteredLocations = locationListSample
+  , searchFilter = NoFilter
+  } ! []
 
 
 
@@ -30,7 +70,25 @@ init =
 type alias Model =
   { floorplan : FloorPlan
   , locations : List Location
+  , filterNameInput : String
+  , filterTypeSelect : String
+  , toolTip : ToolTip
+  , filteredLocations : List Location
+  , searchFilter : Filter
   }
+
+
+type ToolTip
+  = NotShown
+  | SmallToolTip String
+  | DetailedToolTip Location
+
+
+type Filter
+  = NoFilter
+  | ByName String
+  | ByType String
+  | ByNameAndType String String
 
 
 
@@ -38,25 +96,58 @@ type alias Model =
 
 
 type Msg
-  = NoOp
+  = FilterLocations Filter
+  | NameInputChange String
+  | TypeSelectChange String
+  | ResetFilterForm
 
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
-    NoOp ->
+    FilterLocations _ ->
       model ! []
 
+    NameInputChange name ->
+      { model | filterNameInput = name } ! []
+
+    TypeSelectChange locationType ->
+      { model | filterTypeSelect = locationType } ! []
+
+    ResetFilterForm ->
+      { model
+      | filterNameInput = ""
+      , filterTypeSelect = defaultSelect
+      , filteredLocations = model.locations
+      , searchFilter = NoFilter
+      } ! []
 
 
 -- VIEW
 
 
+(=>) = (,)
+
+
+onChange : (String -> msg) -> Attribute msg
+onChange tagger =
+  on "change" (Json.map tagger targetValue) 
+
+
 view : Model -> Html Msg
 view model =
-  div [ onClick NoOp ]
-    [ text <| "The name of this floor plan is " ++ model.floorplan.name
-    , svgMap model.floorplan model.locations
+  div []
+    [ h1 [] [ text model.floorplan.name ]
+    , div
+        [ style
+            [ "display" => "flex"
+            , "justify-content" => "space-around"
+            , "align-items" => "flex-start"
+            ]
+        ]
+        [ svgMap model.floorplan model.filteredLocations
+        , viewFilterLocations model
+        ]
     ]
 
 
@@ -65,9 +156,13 @@ svgMap floorplan locations =
   svg
     [ width "600"
     , height "400"
-    , style [ ("background", "url(" ++ floorplan.src ++ ")"), ("backgroundSize", "100% auto"), ("backgroundRepeat", "no-repeat") ] 
-    ] <|
-      plotLocations locations
+    , style
+        [ "background" => ("url(" ++ floorplan.src ++ ")")
+        , "backgroundSize" => "100% auto"
+        , "backgroundRepeat" => "no-repeat"
+        ]
+    ]
+    <| plotLocations locations
 
 
 plotLocations : List Location -> List (Html Msg)
@@ -82,9 +177,70 @@ plotLocation location =
     [ cx (toString <| location.position_x * 600)
     , cy (toString <| location.position_y * 400)
     , r "8"
-    , fill "blue"
+    , fill "gray"
     , fillOpacity "0.5"
     ] []
+
+
+viewFilterLocations : Model -> Html Msg
+viewFilterLocations { filteredLocations, filterNameInput, filterTypeSelect } =
+  div []
+    [ h1 [] [ text "Locations" ]
+    , filterForm filterNameInput filterTypeSelect
+    , div [] <| locationInfoList filteredLocations
+    ]
+
+
+filterForm : String -> String -> Html Msg
+filterForm nameInput typeSelected =
+  div []
+    [ input
+        [ placeholder "Filter by name"
+        , value nameInput
+        , onChange NameInputChange
+        ] []
+    , select [ onChange TypeSelectChange ] <| optionList typeSelected
+    , button [ onClick ResetFilterForm ] [ text "Reset filter" ]
+    ]
+
+
+optionList : String -> List (Html Msg)
+optionList typeSelected =
+  let
+    options =
+      [ "Desk"
+      , "Office"
+      , "Conference Room"
+      , "Common Area"
+      , "Restroom"
+      , "Public Area"
+      , "Private Area"
+      , "Miscellaneous"
+      ]
+    initialOption =
+      option
+        [ selected <| isTypeSelected typeSelected defaultSelect ]
+        [ text defaultSelect ] :: []
+  in
+    (++) initialOption
+      (options
+        |> List.map
+          (\opt ->
+              option [ selected <| isTypeSelected typeSelected opt ] [ text opt ]
+          )
+      )
+
+
+isTypeSelected : String -> String -> Bool
+isTypeSelected typeSelected t =
+  typeSelected == t
+
+locationInfoList : List Location -> List (Html Msg)
+locationInfoList locations =
+  locations
+    |> List.map
+      (\location ->
+        p [] [ text <| location.name ++ " - " ++ location.locationType ])
 
 
 
