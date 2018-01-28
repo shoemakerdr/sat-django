@@ -1,11 +1,16 @@
 {% extends 'base.html' %}
+{% load staticfiles %}
 
 {% block title %}
-  View Floor plan
+  View Floor Plan
 {% endblock %}
 
 {% block content %}
 
-<h1>Welcome to Sat.</h1>
+<div id='main'></div>
+<script type='text/javascript' src='{% static "js/view_floorplan.js" %}'></script>
+<script type='text/javascript'>
+  Elm.Main.fullscreen()
+</script>
 
 {% endblock %}
