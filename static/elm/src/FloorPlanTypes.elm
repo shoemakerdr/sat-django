@@ -19,6 +19,7 @@ type alias FloorPlan =
 type alias Location =
   { id : Int
   , name : String
+  , locationType : String
   , details : String
   , extension : String
   , position_x : Float
@@ -37,10 +38,11 @@ floorplanSample =
   }
 
 
-newLocation : Int -> String -> Float -> Float -> Location
-newLocation id name x y =
+newLocation : Int -> String -> String -> Float -> Float -> Location
+newLocation id name locationType x y =
   { id = id
   , name = name
+  , locationType = locationType
   , details = "Some details"
   , extension = "ext. 8000"
   , position_x = x
@@ -51,8 +53,8 @@ newLocation id name x y =
 
 locationListSample : List Location
 locationListSample =
-  [ newLocation 1 "bedroom" 0.175 0.2
-  , newLocation 2 "bathroom" 0.4066666666666667 0.165
-  , newLocation 3 "kitchen" 0.568333333333333 0.1325
-  , newLocation 4 "living room" 0.68166 0.4275 
+  [ newLocation 1 "bedroom" "Private Area" 0.175 0.2
+  , newLocation 2 "bathroom" "Restroom" 0.4066666666666667 0.165
+  , newLocation 3 "kitchen" "Common Area" 0.568333333333333 0.1325
+  , newLocation 4 "living room" "Common Area" 0.68166 0.4275
   ]
