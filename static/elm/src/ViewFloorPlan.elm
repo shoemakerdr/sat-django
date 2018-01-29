@@ -20,7 +20,7 @@ import Html.Attributes exposing
   , placeholder
   , value
   )
-import Html.Events exposing (onClick, on, targetValue)
+import Html.Events exposing (onClick, onInput, on, targetValue)
 import Svg exposing (svg, circle)
 import Svg.Attributes as SvgAttr exposing
   ( width
@@ -105,14 +105,14 @@ type Msg
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
-    FilterLocations _ ->
-      model ! []
+    FilterLocations filter ->
+      updateFilter model filter
 
     NameInputChange name ->
-      { model | filterNameInput = name } ! []
+      update (FilterLocations (ByName name)) model
 
     TypeSelectChange locationType ->
-      { model | filterTypeSelect = locationType } ! []
+      update (FilterLocations (ByType locationType)) model
 
     ResetFilterForm ->
       { model
@@ -123,6 +123,35 @@ update msg model =
       } ! []
 
 
+filterName name location =
+  String.contains name location.name
+
+filterType locationType location =
+  locationType == location.locationType
+
+
+updateFilter : Model -> Filter -> (Model, Cmd Msg)
+updateFilter model filter =
+      case filter of
+        ByName name ->
+          { model
+          | filterNameInput = name
+          , filteredLocations =
+              model.locations
+                |> List.filter (filterName name)
+          } ! []
+
+        ByType locationType ->
+          { model
+          | filterTypeSelect = locationType
+          , filteredLocations =
+              model.locations
+                |> List.filter (filterType locationType)
+          } ! []
+
+        _ ->
+          model ! []
+
 -- VIEW
 
 
@@ -131,7 +160,7 @@ update msg model =
 
 onChange : (String -> msg) -> Attribute msg
 onChange tagger =
-  on "change" (Json.map tagger targetValue) 
+  on "change" (Json.map tagger targetValue)
 
 
 view : Model -> Html Msg
@@ -197,7 +226,7 @@ filterForm nameInput typeSelected =
     [ input
         [ placeholder "Filter by name"
         , value nameInput
-        , onChange NameInputChange
+        , onInput NameInputChange
         ] []
     , select [ onChange TypeSelectChange ] <| optionList typeSelected
     , button [ onClick ResetFilterForm ] [ text "Reset filter" ]
