@@ -1,0 +1,40 @@
+
+
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Sat |
+  View Floor Plan
+</title>
+    <link href='http://localhost:8000/static/css/base.css' rel='stylesheet'>
+  </head>
+  <body>
+    <nav class='navbar'>
+      <div class='title-logo'>
+        <img class='logo' src='http://localhost:8000/static/images/chair.svg' alt='chair' />
+        <h2 class='title'>Sat</h2>
+      </div>
+      <div class='nav-buttons'>
+
+          <a class='nav-link' href='/dashboard/'>Dashboard</a>
+          <a class='nav-link' href='/logout'>Logout</a>
+
+      </div>
+    </nav>
+    <div class='container'>
+
+
+<div id='main'></div>
+<!-- <script type='text/javascript' src='/static/js/view_floorplan.js'></script> -->
+<script type='text/javascript' src='/elm.js'></script>
+<script type='text/javascript'>
+  Elm.Main.embed(document.getElementById("main"))
+</script>
+
+
+    </div>
+  </body>
+
+</html>
+

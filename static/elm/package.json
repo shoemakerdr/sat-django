@@ -1,0 +1,15 @@
+{
+  "name": "elm",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "elm": "node_modules/elm-live/bin/elm-live.js src/ViewFloorPlan.elm --output=elm.js --open",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "elm-live": "^2.7.5"
+  }
+}
