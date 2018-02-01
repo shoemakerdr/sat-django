@@ -1,7 +1,8 @@
 module Filter exposing
   ( Filter(..)
   , merge
-  , applyFilters
+  , remove
+  , apply
   )
 
 
@@ -11,13 +12,19 @@ type Filter a b = Filter a (b -> Bool)
 merge : Filter a b -> List (Filter a b) -> List (Filter a b)
 merge filter filterList =
   filterList
+    |> remove filter
+    |> (::) filter
+
+
+remove : Filter a b -> List (Filter a b) -> List (Filter a b)
+remove filter filterList =
+  filterList
     |> List.filter
         (\f ->
           case (filter, f) of
             (Filter a _, Filter b _) ->
               a /= b
         )
-    |> (::) filter
 
 
 apply : List (Filter a b) -> List b -> List b
