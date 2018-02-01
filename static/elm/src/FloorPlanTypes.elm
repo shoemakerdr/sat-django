@@ -32,7 +32,7 @@ floorplanSample : FloorPlan
 floorplanSample =
   { id = 1
   , name = "My House"
-  , src = "./floor-plan.jpg"
+  , src = "src/floor-plan.jpg"
   , widthOffset = 1.0
   , heightOffset = 1.0
   }
