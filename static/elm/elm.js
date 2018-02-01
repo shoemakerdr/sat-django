@@ -8601,6 +8601,47 @@ var _elm_lang$svg$Svg_Attributes$accumulate = _elm_lang$virtual_dom$VirtualDom$a
 var _elm_lang$svg$Svg_Attributes$accelerate = _elm_lang$virtual_dom$VirtualDom$attribute('accelerate');
 var _elm_lang$svg$Svg_Attributes$accentHeight = _elm_lang$virtual_dom$VirtualDom$attribute('accent-height');
 
+var _user$project$Filter$apply = F2(
+	function (filters, list) {
+		apply:
+		while (true) {
+			var _p0 = _elm_lang$core$List$head(filters);
+			if (_p0.ctor === 'Nothing') {
+				return list;
+			} else {
+				var _v1 = A2(_elm_lang$core$List$drop, 1, filters),
+					_v2 = A2(_elm_lang$core$List$filter, _p0._0._1, list);
+				filters = _v1;
+				list = _v2;
+				continue apply;
+			}
+		}
+	});
+var _user$project$Filter$remove = F2(
+	function (filter, filterList) {
+		return A2(
+			_elm_lang$core$List$filter,
+			function (f) {
+				var _p1 = {ctor: '_Tuple2', _0: filter, _1: f};
+				return !_elm_lang$core$Native_Utils.eq(_p1._0._0, _p1._1._0);
+			},
+			filterList);
+	});
+var _user$project$Filter$merge = F2(
+	function (filter, filterList) {
+		return A2(
+			F2(
+				function (x, y) {
+					return {ctor: '::', _0: x, _1: y};
+				}),
+			filter,
+			A2(_user$project$Filter$remove, filter, filterList));
+	});
+var _user$project$Filter$Filter = F2(
+	function (a, b) {
+		return {ctor: 'Filter', _0: a, _1: b};
+	});
+
 var _user$project$FloorPlanTypes$newLocation = F5(
 	function (id, name, locationType, x, y) {
 		return {id: id, name: name, locationType: locationType, details: 'Some details', extension: 'ext. 8000', position_x: x, position_y: y, last_updated: 1517108599541};
@@ -8738,14 +8779,25 @@ var _user$project$Main$svgMap = F2(
 			},
 			_user$project$Main$plotLocations(locations));
 	});
-var _user$project$Main$applyFilters = F2(
-	function (filter, locations) {
-		return _elm_lang$core$Native_Utils.crash(
-			'Main',
-			{
-				start: {line: 183, column: 3},
-				end: {line: 183, column: 14}
-			})('TODO');
+var _user$project$Main$updateFilter = F3(
+	function (filterMsg, filter, model) {
+		var filters = function () {
+			var _p0 = filterMsg;
+			if (_p0.ctor === 'Remove') {
+				return A2(_user$project$Filter$remove, filter, model.filters);
+			} else {
+				return A2(_user$project$Filter$merge, filter, model.filters);
+			}
+		}();
+		return A2(
+			_elm_lang$core$Platform_Cmd_ops['!'],
+			_elm_lang$core$Native_Utils.update(
+				model,
+				{
+					filteredLocations: A2(_user$project$Filter$apply, filters, model.locations),
+					filters: filters
+				}),
+			{ctor: '[]'});
 	});
 var _user$project$Main$filterByType = F2(
 	function (locationType, location) {
@@ -8756,6 +8808,17 @@ var _user$project$Main$filterByName = F2(
 		return A2(_elm_lang$core$String$contains, name, location.name);
 	});
 var _user$project$Main$defaultSelect = '-- Select type --';
+var _user$project$Main$init = A2(
+	_elm_lang$core$Platform_Cmd_ops['!'],
+	{
+		floorplan: _user$project$FloorPlanTypes$floorplanSample,
+		locations: _user$project$FloorPlanTypes$locationListSample,
+		nameInput: '',
+		typeSelect: _user$project$Main$defaultSelect,
+		filteredLocations: _user$project$FloorPlanTypes$locationListSample,
+		filters: {ctor: '[]'}
+	},
+	{ctor: '[]'});
 var _user$project$Main$optionList = function (typeSelected) {
 	var initialOption = {
 		ctor: '::',
@@ -8834,113 +8897,60 @@ var _user$project$Main$optionList = function (typeSelected) {
 };
 var _user$project$Main$Model = F6(
 	function (a, b, c, d, e, f) {
-		return {floorplan: a, locations: b, filterNameInput: c, filterTypeSelect: d, filteredLocations: e, searchFilter: f};
+		return {floorplan: a, locations: b, nameInput: c, typeSelect: d, filteredLocations: e, filters: f};
 	});
-var _user$project$Main$Type = function (a) {
-	return {ctor: 'Type', _0: a};
-};
-var _user$project$Main$Name = function (a) {
-	return {ctor: 'Name', _0: a};
-};
-var _user$project$Main$Filtering = function (a) {
-	return {ctor: 'Filtering', _0: a};
-};
-var _user$project$Main$addFilter = F2(
-	function (filterType, filter) {
-		var _p0 = filter;
-		if (_p0.ctor === 'Filtering') {
-			return _user$project$Main$Filtering(
-				A2(
-					F2(
-						function (x, y) {
-							return {ctor: '::', _0: x, _1: y};
-						}),
-					filterType,
-					A2(
-						_elm_lang$core$List$filter,
-						function (ft) {
-							var _p1 = {ctor: '_Tuple2', _0: filterType, _1: ft};
-							_v1_2:
-							do {
-								if (_p1._0.ctor === 'Name') {
-									if (_p1._1.ctor === 'Name') {
-										return false;
-									} else {
-										break _v1_2;
-									}
-								} else {
-									if (_p1._1.ctor === 'Type') {
-										return false;
-									} else {
-										break _v1_2;
-									}
-								}
-							} while(false);
-							return true;
-						},
-						_p0._0)));
-		} else {
-			return _user$project$Main$Filtering(
-				{
-					ctor: '::',
-					_0: filterType,
-					_1: {ctor: '[]'}
-				});
-		}
-	});
-var _user$project$Main$updateFilter = F2(
-	function (filterType, model) {
-		var filter = A2(_user$project$Main$addFilter, filterType, model.searchFilter);
-		var _p2 = filterType;
-		if (_p2.ctor === 'Name') {
-			return A2(
-				_elm_lang$core$Platform_Cmd_ops['!'],
-				_elm_lang$core$Native_Utils.update(
-					model,
-					{
-						filterNameInput: _p2._0,
-						filteredLocations: A2(_user$project$Main$applyFilters, filter, model.locations),
-						searchFilter: filter
-					}),
-				{ctor: '[]'});
-		} else {
-			return A2(
-				_elm_lang$core$Platform_Cmd_ops['!'],
-				_elm_lang$core$Native_Utils.update(
-					model,
-					{
-						filterTypeSelect: _p2._0,
-						filteredLocations: A2(_user$project$Main$applyFilters, filter, model.locations),
-						searchFilter: filter
-					}),
-				{ctor: '[]'});
-		}
-	});
-var _user$project$Main$NoFilter = {ctor: 'NoFilter'};
-var _user$project$Main$init = A2(
-	_elm_lang$core$Platform_Cmd_ops['!'],
-	{floorplan: _user$project$FloorPlanTypes$floorplanSample, locations: _user$project$FloorPlanTypes$locationListSample, filterNameInput: '', filterTypeSelect: _user$project$Main$defaultSelect, filteredLocations: _user$project$FloorPlanTypes$locationListSample, searchFilter: _user$project$Main$NoFilter},
-	{ctor: '[]'});
+var _user$project$Main$Type = {ctor: 'Type'};
+var _user$project$Main$Name = {ctor: 'Name'};
+var _user$project$Main$Remove = {ctor: 'Remove'};
+var _user$project$Main$Merge = {ctor: 'Merge'};
 var _user$project$Main$update = F2(
 	function (msg, model) {
-		var _p3 = msg;
-		switch (_p3.ctor) {
+		var _p1 = msg;
+		switch (_p1.ctor) {
 			case 'NameInputChange':
-				return A2(
+				var _p3 = _p1._0;
+				var filterMsg = function () {
+					var _p2 = _p3;
+					if (_p2 === '') {
+						return _user$project$Main$Remove;
+					} else {
+						return _user$project$Main$Merge;
+					}
+				}();
+				return A3(
 					_user$project$Main$updateFilter,
-					_user$project$Main$Name(_p3._0),
-					model);
+					filterMsg,
+					A2(
+						_user$project$Filter$Filter,
+						_user$project$Main$Name,
+						_user$project$Main$filterByName(_p3)),
+					_elm_lang$core$Native_Utils.update(
+						model,
+						{nameInput: _p3}));
 			case 'TypeSelectChange':
-				return A2(
+				var _p4 = _p1._0;
+				var filterMsg = _elm_lang$core$Native_Utils.eq(_p4, _user$project$Main$defaultSelect) ? _user$project$Main$Remove : _user$project$Main$Merge;
+				return A3(
 					_user$project$Main$updateFilter,
-					_user$project$Main$Type(_p3._0),
-					model);
+					filterMsg,
+					A2(
+						_user$project$Filter$Filter,
+						_user$project$Main$Type,
+						_user$project$Main$filterByType(_p4)),
+					_elm_lang$core$Native_Utils.update(
+						model,
+						{typeSelect: _p4}));
 			default:
 				return A2(
 					_elm_lang$core$Platform_Cmd_ops['!'],
 					_elm_lang$core$Native_Utils.update(
 						model,
-						{filterNameInput: '', filterTypeSelect: _user$project$Main$defaultSelect, filteredLocations: model.locations, searchFilter: _user$project$Main$NoFilter}),
+						{
+							nameInput: '',
+							typeSelect: _user$project$Main$defaultSelect,
+							filteredLocations: model.locations,
+							filters: {ctor: '[]'}
+						}),
 					{ctor: '[]'});
 		}
 	});
@@ -9003,8 +9013,8 @@ var _user$project$Main$filterForm = F2(
 				}
 			});
 	});
-var _user$project$Main$viewFilterLocations = function (_p4) {
-	var _p5 = _p4;
+var _user$project$Main$viewFilterLocations = function (_p5) {
+	var _p6 = _p5;
 	return A2(
 		_elm_lang$html$Html$div,
 		{ctor: '[]'},
@@ -9020,13 +9030,13 @@ var _user$project$Main$viewFilterLocations = function (_p4) {
 				}),
 			_1: {
 				ctor: '::',
-				_0: A2(_user$project$Main$filterForm, _p5.filterNameInput, _p5.filterTypeSelect),
+				_0: A2(_user$project$Main$filterForm, _p6.nameInput, _p6.typeSelect),
 				_1: {
 					ctor: '::',
 					_0: A2(
 						_elm_lang$html$Html$div,
 						{ctor: '[]'},
-						_user$project$Main$locationInfoList(_p5.filteredLocations)),
+						_user$project$Main$locationInfoList(_p6.filteredLocations)),
 					_1: {ctor: '[]'}
 				}
 			}
