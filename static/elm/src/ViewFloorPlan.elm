@@ -34,6 +34,7 @@ import Svg.Attributes as SvgAttr exposing
 import Json.Decode as Json
 
 import FloorPlanTypes exposing (..)
+import Filter exposing (Filter(..))
 
 
 
@@ -55,11 +56,11 @@ init : (Model, Cmd Msg)
 init =
   { floorplan = floorplanSample
   , locations  = locationListSample
-  , filterNameInput = ""
-  , filterTypeSelect = defaultSelect
-  , toolTip = NotShown
+  , nameInput = ""
+  , typeSelect = defaultSelect
+  -- , toolTip = NotShown
   , filteredLocations = locationListSample
-  , searchFilter = NoFilter
+  , filters = []
   } ! []
 
 
@@ -70,25 +71,28 @@ init =
 type alias Model =
   { floorplan : FloorPlan
   , locations : List Location
-  , filterNameInput : String
-  , filterTypeSelect : String
-  , toolTip : ToolTip
+  , nameInput : String
+  , typeSelect : String
+  -- , toolTip : ToolTip
   , filteredLocations : List Location
-  , searchFilter : Filter
+  , filters : List (Filter FilterType Location)
   }
 
 
-type ToolTip
-  = NotShown
-  | SmallToolTip String
-  | DetailedToolTip Location
+-- type ToolTip
+  -- = NotShown
+  -- | SmallToolTip String
+  -- | DetailedToolTip Location
 
 
-type Filter
-  = NoFilter
-  | ByName String
-  | ByType String
-  | ByNameAndType String String
+type FilterType
+  = Name
+  | Type
+
+
+type FilterMsg
+  = Merge
+  | Remove
 
 
 
@@ -96,8 +100,7 @@ type Filter
 
 
 type Msg
-  = FilterLocations Filter
-  | NameInputChange String
+  = NameInputChange String
   | TypeSelectChange String
   | ResetFilterForm
 
@@ -105,52 +108,65 @@ type Msg
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
-    FilterLocations filter ->
-      updateFilter model filter
-
     NameInputChange name ->
-      update (FilterLocations (ByName name)) model
+      let
+        filterMsg =
+          case name of
+            "" ->
+              Remove
+
+            _ ->
+              Merge
+      in
+        updateFilter filterMsg (Filter Name (filterByName name)) { model | nameInput = name }
 
     TypeSelectChange locationType ->
-      update (FilterLocations (ByType locationType)) model
+      let
+        filterMsg =
+          if locationType == defaultSelect then
+            Remove
+          else
+            Merge
+      in
+        updateFilter filterMsg (Filter Type (filterByType locationType)) { model | typeSelect = locationType }
 
     ResetFilterForm ->
       { model
-      | filterNameInput = ""
-      , filterTypeSelect = defaultSelect
+      | nameInput = ""
+      , typeSelect = defaultSelect
       , filteredLocations = model.locations
-      , searchFilter = NoFilter
+      , filters = []
       } ! []
 
 
-filterName name location =
+filterByName : String -> Location -> Bool
+filterByName name location =
   String.contains name location.name
 
-filterType locationType location =
+
+filterByType : String -> Location -> Bool
+filterByType locationType location =
   locationType == location.locationType
 
 
-updateFilter : Model -> Filter -> (Model, Cmd Msg)
-updateFilter model filter =
-      case filter of
-        ByName name ->
-          { model
-          | filterNameInput = name
-          , filteredLocations =
-              model.locations
-                |> List.filter (filterName name)
-          } ! []
+updateFilter :  FilterMsg -> Filter FilterType Location -> Model -> (Model, Cmd Msg)
+updateFilter filterMsg filter model =
+    let
+      filters =
+        case filterMsg of
+          Remove ->
+            Filter.remove filter model.filters
 
-        ByType locationType ->
-          { model
-          | filterTypeSelect = locationType
-          , filteredLocations =
-              model.locations
-                |> List.filter (filterType locationType)
-          } ! []
+          Merge ->
+            Filter.merge filter model.filters
+    in
+      { model
+      | filteredLocations =
+          Filter.apply filters model.locations
+      , filters = filters
+      } ! []
 
-        _ ->
-          model ! []
+
 
 -- VIEW
 
@@ -212,10 +228,10 @@ plotLocation location =
 
 
 viewFilterLocations : Model -> Html Msg
-viewFilterLocations { filteredLocations, filterNameInput, filterTypeSelect } =
+viewFilterLocations { filteredLocations, nameInput, typeSelect } =
   div []
     [ h1 [] [ text "Locations" ]
-    , filterForm filterNameInput filterTypeSelect
+    , filterForm nameInput typeSelect
     , div [] <| locationInfoList filteredLocations
     ]
 
