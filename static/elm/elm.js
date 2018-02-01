@@ -8805,7 +8805,10 @@ var _user$project$Main$filterByType = F2(
 	});
 var _user$project$Main$filterByName = F2(
 	function (name, location) {
-		return A2(_elm_lang$core$String$contains, name, location.name);
+		return A2(
+			_elm_lang$core$String$contains,
+			_elm_lang$core$String$toLower(name),
+			_elm_lang$core$String$toLower(location.name));
 	});
 var _user$project$Main$defaultSelect = '-- Select type --';
 var _user$project$Main$init = A2(

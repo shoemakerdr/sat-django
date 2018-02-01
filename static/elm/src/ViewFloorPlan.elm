@@ -141,7 +141,7 @@ update msg model =
 
 filterByName : String -> Location -> Bool
 filterByName name location =
-  String.contains name location.name
+  String.contains (String.toLower name) (String.toLower location.name)
 
 
 filterByType : String -> Location -> Bool
