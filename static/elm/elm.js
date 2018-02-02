@@ -3746,6 +3746,203 @@ var _elm_lang$core$Result$fromMaybe = F2(
 		}
 	});
 
+var _elm_lang$core$Task$onError = _elm_lang$core$Native_Scheduler.onError;
+var _elm_lang$core$Task$andThen = _elm_lang$core$Native_Scheduler.andThen;
+var _elm_lang$core$Task$spawnCmd = F2(
+	function (router, _p0) {
+		var _p1 = _p0;
+		return _elm_lang$core$Native_Scheduler.spawn(
+			A2(
+				_elm_lang$core$Task$andThen,
+				_elm_lang$core$Platform$sendToApp(router),
+				_p1._0));
+	});
+var _elm_lang$core$Task$fail = _elm_lang$core$Native_Scheduler.fail;
+var _elm_lang$core$Task$mapError = F2(
+	function (convert, task) {
+		return A2(
+			_elm_lang$core$Task$onError,
+			function (_p2) {
+				return _elm_lang$core$Task$fail(
+					convert(_p2));
+			},
+			task);
+	});
+var _elm_lang$core$Task$succeed = _elm_lang$core$Native_Scheduler.succeed;
+var _elm_lang$core$Task$map = F2(
+	function (func, taskA) {
+		return A2(
+			_elm_lang$core$Task$andThen,
+			function (a) {
+				return _elm_lang$core$Task$succeed(
+					func(a));
+			},
+			taskA);
+	});
+var _elm_lang$core$Task$map2 = F3(
+	function (func, taskA, taskB) {
+		return A2(
+			_elm_lang$core$Task$andThen,
+			function (a) {
+				return A2(
+					_elm_lang$core$Task$andThen,
+					function (b) {
+						return _elm_lang$core$Task$succeed(
+							A2(func, a, b));
+					},
+					taskB);
+			},
+			taskA);
+	});
+var _elm_lang$core$Task$map3 = F4(
+	function (func, taskA, taskB, taskC) {
+		return A2(
+			_elm_lang$core$Task$andThen,
+			function (a) {
+				return A2(
+					_elm_lang$core$Task$andThen,
+					function (b) {
+						return A2(
+							_elm_lang$core$Task$andThen,
+							function (c) {
+								return _elm_lang$core$Task$succeed(
+									A3(func, a, b, c));
+							},
+							taskC);
+					},
+					taskB);
+			},
+			taskA);
+	});
+var _elm_lang$core$Task$map4 = F5(
+	function (func, taskA, taskB, taskC, taskD) {
+		return A2(
+			_elm_lang$core$Task$andThen,
+			function (a) {
+				return A2(
+					_elm_lang$core$Task$andThen,
+					function (b) {
+						return A2(
+							_elm_lang$core$Task$andThen,
+							function (c) {
+								return A2(
+									_elm_lang$core$Task$andThen,
+									function (d) {
+										return _elm_lang$core$Task$succeed(
+											A4(func, a, b, c, d));
+									},
+									taskD);
+							},
+							taskC);
+					},
+					taskB);
+			},
+			taskA);
+	});
+var _elm_lang$core$Task$map5 = F6(
+	function (func, taskA, taskB, taskC, taskD, taskE) {
+		return A2(
+			_elm_lang$core$Task$andThen,
+			function (a) {
+				return A2(
+					_elm_lang$core$Task$andThen,
+					function (b) {
+						return A2(
+							_elm_lang$core$Task$andThen,
+							function (c) {
+								return A2(
+									_elm_lang$core$Task$andThen,
+									function (d) {
+										return A2(
+											_elm_lang$core$Task$andThen,
+											function (e) {
+												return _elm_lang$core$Task$succeed(
+													A5(func, a, b, c, d, e));
+											},
+											taskE);
+									},
+									taskD);
+							},
+							taskC);
+					},
+					taskB);
+			},
+			taskA);
+	});
+var _elm_lang$core$Task$sequence = function (tasks) {
+	var _p3 = tasks;
+	if (_p3.ctor === '[]') {
+		return _elm_lang$core$Task$succeed(
+			{ctor: '[]'});
+	} else {
+		return A3(
+			_elm_lang$core$Task$map2,
+			F2(
+				function (x, y) {
+					return {ctor: '::', _0: x, _1: y};
+				}),
+			_p3._0,
+			_elm_lang$core$Task$sequence(_p3._1));
+	}
+};
+var _elm_lang$core$Task$onEffects = F3(
+	function (router, commands, state) {
+		return A2(
+			_elm_lang$core$Task$map,
+			function (_p4) {
+				return {ctor: '_Tuple0'};
+			},
+			_elm_lang$core$Task$sequence(
+				A2(
+					_elm_lang$core$List$map,
+					_elm_lang$core$Task$spawnCmd(router),
+					commands)));
+	});
+var _elm_lang$core$Task$init = _elm_lang$core$Task$succeed(
+	{ctor: '_Tuple0'});
+var _elm_lang$core$Task$onSelfMsg = F3(
+	function (_p7, _p6, _p5) {
+		return _elm_lang$core$Task$succeed(
+			{ctor: '_Tuple0'});
+	});
+var _elm_lang$core$Task$command = _elm_lang$core$Native_Platform.leaf('Task');
+var _elm_lang$core$Task$Perform = function (a) {
+	return {ctor: 'Perform', _0: a};
+};
+var _elm_lang$core$Task$perform = F2(
+	function (toMessage, task) {
+		return _elm_lang$core$Task$command(
+			_elm_lang$core$Task$Perform(
+				A2(_elm_lang$core$Task$map, toMessage, task)));
+	});
+var _elm_lang$core$Task$attempt = F2(
+	function (resultToMessage, task) {
+		return _elm_lang$core$Task$command(
+			_elm_lang$core$Task$Perform(
+				A2(
+					_elm_lang$core$Task$onError,
+					function (_p8) {
+						return _elm_lang$core$Task$succeed(
+							resultToMessage(
+								_elm_lang$core$Result$Err(_p8)));
+					},
+					A2(
+						_elm_lang$core$Task$andThen,
+						function (_p9) {
+							return _elm_lang$core$Task$succeed(
+								resultToMessage(
+									_elm_lang$core$Result$Ok(_p9)));
+						},
+						task))));
+	});
+var _elm_lang$core$Task$cmdMap = F2(
+	function (tagger, _p10) {
+		var _p11 = _p10;
+		return _elm_lang$core$Task$Perform(
+			A2(_elm_lang$core$Task$map, tagger, _p11._0));
+	});
+_elm_lang$core$Native_Platform.effectManagers['Task'] = {pkg: 'elm-lang/core', init: _elm_lang$core$Task$init, onEffects: _elm_lang$core$Task$onEffects, onSelfMsg: _elm_lang$core$Task$onSelfMsg, tag: 'cmd', cmdMap: _elm_lang$core$Task$cmdMap};
+
 //import Native.Utils //
 
 var _elm_lang$core$Native_Debug = function() {
@@ -5077,6 +5274,221 @@ var _elm_lang$core$Dict$diff = F2(
 			t2);
 	});
 
+//import Native.Scheduler //
+
+var _elm_lang$core$Native_Time = function() {
+
+var now = _elm_lang$core$Native_Scheduler.nativeBinding(function(callback)
+{
+	callback(_elm_lang$core$Native_Scheduler.succeed(Date.now()));
+});
+
+function setInterval_(interval, task)
+{
+	return _elm_lang$core$Native_Scheduler.nativeBinding(function(callback)
+	{
+		var id = setInterval(function() {
+			_elm_lang$core$Native_Scheduler.rawSpawn(task);
+		}, interval);
+
+		return function() { clearInterval(id); };
+	});
+}
+
+return {
+	now: now,
+	setInterval_: F2(setInterval_)
+};
+
+}();
+var _elm_lang$core$Time$setInterval = _elm_lang$core$Native_Time.setInterval_;
+var _elm_lang$core$Time$spawnHelp = F3(
+	function (router, intervals, processes) {
+		var _p0 = intervals;
+		if (_p0.ctor === '[]') {
+			return _elm_lang$core$Task$succeed(processes);
+		} else {
+			var _p1 = _p0._0;
+			var spawnRest = function (id) {
+				return A3(
+					_elm_lang$core$Time$spawnHelp,
+					router,
+					_p0._1,
+					A3(_elm_lang$core$Dict$insert, _p1, id, processes));
+			};
+			var spawnTimer = _elm_lang$core$Native_Scheduler.spawn(
+				A2(
+					_elm_lang$core$Time$setInterval,
+					_p1,
+					A2(_elm_lang$core$Platform$sendToSelf, router, _p1)));
+			return A2(_elm_lang$core$Task$andThen, spawnRest, spawnTimer);
+		}
+	});
+var _elm_lang$core$Time$addMySub = F2(
+	function (_p2, state) {
+		var _p3 = _p2;
+		var _p6 = _p3._1;
+		var _p5 = _p3._0;
+		var _p4 = A2(_elm_lang$core$Dict$get, _p5, state);
+		if (_p4.ctor === 'Nothing') {
+			return A3(
+				_elm_lang$core$Dict$insert,
+				_p5,
+				{
+					ctor: '::',
+					_0: _p6,
+					_1: {ctor: '[]'}
+				},
+				state);
+		} else {
+			return A3(
+				_elm_lang$core$Dict$insert,
+				_p5,
+				{ctor: '::', _0: _p6, _1: _p4._0},
+				state);
+		}
+	});
+var _elm_lang$core$Time$inMilliseconds = function (t) {
+	return t;
+};
+var _elm_lang$core$Time$millisecond = 1;
+var _elm_lang$core$Time$second = 1000 * _elm_lang$core$Time$millisecond;
+var _elm_lang$core$Time$minute = 60 * _elm_lang$core$Time$second;
+var _elm_lang$core$Time$hour = 60 * _elm_lang$core$Time$minute;
+var _elm_lang$core$Time$inHours = function (t) {
+	return t / _elm_lang$core$Time$hour;
+};
+var _elm_lang$core$Time$inMinutes = function (t) {
+	return t / _elm_lang$core$Time$minute;
+};
+var _elm_lang$core$Time$inSeconds = function (t) {
+	return t / _elm_lang$core$Time$second;
+};
+var _elm_lang$core$Time$now = _elm_lang$core$Native_Time.now;
+var _elm_lang$core$Time$onSelfMsg = F3(
+	function (router, interval, state) {
+		var _p7 = A2(_elm_lang$core$Dict$get, interval, state.taggers);
+		if (_p7.ctor === 'Nothing') {
+			return _elm_lang$core$Task$succeed(state);
+		} else {
+			var tellTaggers = function (time) {
+				return _elm_lang$core$Task$sequence(
+					A2(
+						_elm_lang$core$List$map,
+						function (tagger) {
+							return A2(
+								_elm_lang$core$Platform$sendToApp,
+								router,
+								tagger(time));
+						},
+						_p7._0));
+			};
+			return A2(
+				_elm_lang$core$Task$andThen,
+				function (_p8) {
+					return _elm_lang$core$Task$succeed(state);
+				},
+				A2(_elm_lang$core$Task$andThen, tellTaggers, _elm_lang$core$Time$now));
+		}
+	});
+var _elm_lang$core$Time$subscription = _elm_lang$core$Native_Platform.leaf('Time');
+var _elm_lang$core$Time$State = F2(
+	function (a, b) {
+		return {taggers: a, processes: b};
+	});
+var _elm_lang$core$Time$init = _elm_lang$core$Task$succeed(
+	A2(_elm_lang$core$Time$State, _elm_lang$core$Dict$empty, _elm_lang$core$Dict$empty));
+var _elm_lang$core$Time$onEffects = F3(
+	function (router, subs, _p9) {
+		var _p10 = _p9;
+		var rightStep = F3(
+			function (_p12, id, _p11) {
+				var _p13 = _p11;
+				return {
+					ctor: '_Tuple3',
+					_0: _p13._0,
+					_1: _p13._1,
+					_2: A2(
+						_elm_lang$core$Task$andThen,
+						function (_p14) {
+							return _p13._2;
+						},
+						_elm_lang$core$Native_Scheduler.kill(id))
+				};
+			});
+		var bothStep = F4(
+			function (interval, taggers, id, _p15) {
+				var _p16 = _p15;
+				return {
+					ctor: '_Tuple3',
+					_0: _p16._0,
+					_1: A3(_elm_lang$core$Dict$insert, interval, id, _p16._1),
+					_2: _p16._2
+				};
+			});
+		var leftStep = F3(
+			function (interval, taggers, _p17) {
+				var _p18 = _p17;
+				return {
+					ctor: '_Tuple3',
+					_0: {ctor: '::', _0: interval, _1: _p18._0},
+					_1: _p18._1,
+					_2: _p18._2
+				};
+			});
+		var newTaggers = A3(_elm_lang$core$List$foldl, _elm_lang$core$Time$addMySub, _elm_lang$core$Dict$empty, subs);
+		var _p19 = A6(
+			_elm_lang$core$Dict$merge,
+			leftStep,
+			bothStep,
+			rightStep,
+			newTaggers,
+			_p10.processes,
+			{
+				ctor: '_Tuple3',
+				_0: {ctor: '[]'},
+				_1: _elm_lang$core$Dict$empty,
+				_2: _elm_lang$core$Task$succeed(
+					{ctor: '_Tuple0'})
+			});
+		var spawnList = _p19._0;
+		var existingDict = _p19._1;
+		var killTask = _p19._2;
+		return A2(
+			_elm_lang$core$Task$andThen,
+			function (newProcesses) {
+				return _elm_lang$core$Task$succeed(
+					A2(_elm_lang$core$Time$State, newTaggers, newProcesses));
+			},
+			A2(
+				_elm_lang$core$Task$andThen,
+				function (_p20) {
+					return A3(_elm_lang$core$Time$spawnHelp, router, spawnList, existingDict);
+				},
+				killTask));
+	});
+var _elm_lang$core$Time$Every = F2(
+	function (a, b) {
+		return {ctor: 'Every', _0: a, _1: b};
+	});
+var _elm_lang$core$Time$every = F2(
+	function (interval, tagger) {
+		return _elm_lang$core$Time$subscription(
+			A2(_elm_lang$core$Time$Every, interval, tagger));
+	});
+var _elm_lang$core$Time$subMap = F2(
+	function (f, _p21) {
+		var _p22 = _p21;
+		return A2(
+			_elm_lang$core$Time$Every,
+			_p22._0,
+			function (_p23) {
+				return f(
+					_p22._1(_p23));
+			});
+	});
+_elm_lang$core$Native_Platform.effectManagers['Time'] = {pkg: 'elm-lang/core', init: _elm_lang$core$Time$init, onEffects: _elm_lang$core$Time$onEffects, onSelfMsg: _elm_lang$core$Time$onSelfMsg, tag: 'sub', subMap: _elm_lang$core$Time$subMap};
+
 var _elm_lang$core$Debug$crash = _elm_lang$core$Native_Debug.crash;
 var _elm_lang$core$Debug$log = _elm_lang$core$Native_Debug.log;
 
@@ -5730,6 +6142,10 @@ var _elm_lang$core$Json_Decode$bool = _elm_lang$core$Native_Json.decodePrimitive
 var _elm_lang$core$Json_Decode$string = _elm_lang$core$Native_Json.decodePrimitive('string');
 var _elm_lang$core$Json_Decode$Decoder = {ctor: 'Decoder'};
 
+var _elm_lang$core$Process$kill = _elm_lang$core$Native_Scheduler.kill;
+var _elm_lang$core$Process$sleep = _elm_lang$core$Native_Scheduler.sleep;
+var _elm_lang$core$Process$spawn = _elm_lang$core$Native_Scheduler.spawn;
+
 var _elm_lang$core$Tuple$mapSecond = F2(
 	function (func, _p0) {
 		var _p1 = _p0;
@@ -5756,6 +6172,192 @@ var _elm_lang$core$Tuple$first = function (_p6) {
 	var _p7 = _p6;
 	return _p7._0;
 };
+
+var _elm_lang$dom$Native_Dom = function() {
+
+var fakeNode = {
+	addEventListener: function() {},
+	removeEventListener: function() {}
+};
+
+var onDocument = on(typeof document !== 'undefined' ? document : fakeNode);
+var onWindow = on(typeof window !== 'undefined' ? window : fakeNode);
+
+function on(node)
+{
+	return function(eventName, decoder, toTask)
+	{
+		return _elm_lang$core$Native_Scheduler.nativeBinding(function(callback) {
+
+			function performTask(event)
+			{
+				var result = A2(_elm_lang$core$Json_Decode$decodeValue, decoder, event);
+				if (result.ctor === 'Ok')
+				{
+					_elm_lang$core$Native_Scheduler.rawSpawn(toTask(result._0));
+				}
+			}
+
+			node.addEventListener(eventName, performTask);
+
+			return function()
+			{
+				node.removeEventListener(eventName, performTask);
+			};
+		});
+	};
+}
+
+var rAF = typeof requestAnimationFrame !== 'undefined'
+	? requestAnimationFrame
+	: function(callback) { callback(); };
+
+function withNode(id, doStuff)
+{
+	return _elm_lang$core$Native_Scheduler.nativeBinding(function(callback)
+	{
+		rAF(function()
+		{
+			var node = document.getElementById(id);
+			if (node === null)
+			{
+				callback(_elm_lang$core$Native_Scheduler.fail({ ctor: 'NotFound', _0: id }));
+				return;
+			}
+			callback(_elm_lang$core$Native_Scheduler.succeed(doStuff(node)));
+		});
+	});
+}
+
+
+// FOCUS
+
+function focus(id)
+{
+	return withNode(id, function(node) {
+		node.focus();
+		return _elm_lang$core$Native_Utils.Tuple0;
+	});
+}
+
+function blur(id)
+{
+	return withNode(id, function(node) {
+		node.blur();
+		return _elm_lang$core$Native_Utils.Tuple0;
+	});
+}
+
+
+// SCROLLING
+
+function getScrollTop(id)
+{
+	return withNode(id, function(node) {
+		return node.scrollTop;
+	});
+}
+
+function setScrollTop(id, desiredScrollTop)
+{
+	return withNode(id, function(node) {
+		node.scrollTop = desiredScrollTop;
+		return _elm_lang$core$Native_Utils.Tuple0;
+	});
+}
+
+function toBottom(id)
+{
+	return withNode(id, function(node) {
+		node.scrollTop = node.scrollHeight;
+		return _elm_lang$core$Native_Utils.Tuple0;
+	});
+}
+
+function getScrollLeft(id)
+{
+	return withNode(id, function(node) {
+		return node.scrollLeft;
+	});
+}
+
+function setScrollLeft(id, desiredScrollLeft)
+{
+	return withNode(id, function(node) {
+		node.scrollLeft = desiredScrollLeft;
+		return _elm_lang$core$Native_Utils.Tuple0;
+	});
+}
+
+function toRight(id)
+{
+	return withNode(id, function(node) {
+		node.scrollLeft = node.scrollWidth;
+		return _elm_lang$core$Native_Utils.Tuple0;
+	});
+}
+
+
+// SIZE
+
+function width(options, id)
+{
+	return withNode(id, function(node) {
+		switch (options.ctor)
+		{
+			case 'Content':
+				return node.scrollWidth;
+			case 'VisibleContent':
+				return node.clientWidth;
+			case 'VisibleContentWithBorders':
+				return node.offsetWidth;
+			case 'VisibleContentWithBordersAndMargins':
+				var rect = node.getBoundingClientRect();
+				return rect.right - rect.left;
+		}
+	});
+}
+
+function height(options, id)
+{
+	return withNode(id, function(node) {
+		switch (options.ctor)
+		{
+			case 'Content':
+				return node.scrollHeight;
+			case 'VisibleContent':
+				return node.clientHeight;
+			case 'VisibleContentWithBorders':
+				return node.offsetHeight;
+			case 'VisibleContentWithBordersAndMargins':
+				var rect = node.getBoundingClientRect();
+				return rect.bottom - rect.top;
+		}
+	});
+}
+
+return {
+	onDocument: F3(onDocument),
+	onWindow: F3(onWindow),
+
+	focus: focus,
+	blur: blur,
+
+	getScrollTop: getScrollTop,
+	setScrollTop: F2(setScrollTop),
+	getScrollLeft: getScrollLeft,
+	setScrollLeft: F2(setScrollLeft),
+	toBottom: toBottom,
+	toRight: toRight,
+
+	height: F2(height),
+	width: F2(width)
+};
+
+}();
+
+var _elm_lang$dom$Dom_LowLevel$onWindow = _elm_lang$dom$Native_Dom.onWindow;
+var _elm_lang$dom$Dom_LowLevel$onDocument = _elm_lang$dom$Native_Dom.onDocument;
 
 var _elm_lang$virtual_dom$VirtualDom_Debug$wrap;
 var _elm_lang$virtual_dom$VirtualDom_Debug$wrapWithFlags;
@@ -8260,6 +8862,189 @@ var _elm_lang$html$Html_Events$Options = F2(
 		return {stopPropagation: a, preventDefault: b};
 	});
 
+var _elm_lang$mouse$Mouse_ops = _elm_lang$mouse$Mouse_ops || {};
+_elm_lang$mouse$Mouse_ops['&>'] = F2(
+	function (t1, t2) {
+		return A2(
+			_elm_lang$core$Task$andThen,
+			function (_p0) {
+				return t2;
+			},
+			t1);
+	});
+var _elm_lang$mouse$Mouse$onSelfMsg = F3(
+	function (router, _p1, state) {
+		var _p2 = _p1;
+		var _p3 = A2(_elm_lang$core$Dict$get, _p2.category, state);
+		if (_p3.ctor === 'Nothing') {
+			return _elm_lang$core$Task$succeed(state);
+		} else {
+			var send = function (tagger) {
+				return A2(
+					_elm_lang$core$Platform$sendToApp,
+					router,
+					tagger(_p2.position));
+			};
+			return A2(
+				_elm_lang$mouse$Mouse_ops['&>'],
+				_elm_lang$core$Task$sequence(
+					A2(_elm_lang$core$List$map, send, _p3._0.taggers)),
+				_elm_lang$core$Task$succeed(state));
+		}
+	});
+var _elm_lang$mouse$Mouse$init = _elm_lang$core$Task$succeed(_elm_lang$core$Dict$empty);
+var _elm_lang$mouse$Mouse$categorizeHelpHelp = F2(
+	function (value, maybeValues) {
+		var _p4 = maybeValues;
+		if (_p4.ctor === 'Nothing') {
+			return _elm_lang$core$Maybe$Just(
+				{
+					ctor: '::',
+					_0: value,
+					_1: {ctor: '[]'}
+				});
+		} else {
+			return _elm_lang$core$Maybe$Just(
+				{ctor: '::', _0: value, _1: _p4._0});
+		}
+	});
+var _elm_lang$mouse$Mouse$categorizeHelp = F2(
+	function (subs, subDict) {
+		categorizeHelp:
+		while (true) {
+			var _p5 = subs;
+			if (_p5.ctor === '[]') {
+				return subDict;
+			} else {
+				var _v4 = _p5._1,
+					_v5 = A3(
+					_elm_lang$core$Dict$update,
+					_p5._0._0,
+					_elm_lang$mouse$Mouse$categorizeHelpHelp(_p5._0._1),
+					subDict);
+				subs = _v4;
+				subDict = _v5;
+				continue categorizeHelp;
+			}
+		}
+	});
+var _elm_lang$mouse$Mouse$categorize = function (subs) {
+	return A2(_elm_lang$mouse$Mouse$categorizeHelp, subs, _elm_lang$core$Dict$empty);
+};
+var _elm_lang$mouse$Mouse$subscription = _elm_lang$core$Native_Platform.leaf('Mouse');
+var _elm_lang$mouse$Mouse$Position = F2(
+	function (a, b) {
+		return {x: a, y: b};
+	});
+var _elm_lang$mouse$Mouse$position = A3(
+	_elm_lang$core$Json_Decode$map2,
+	_elm_lang$mouse$Mouse$Position,
+	A2(_elm_lang$core$Json_Decode$field, 'pageX', _elm_lang$core$Json_Decode$int),
+	A2(_elm_lang$core$Json_Decode$field, 'pageY', _elm_lang$core$Json_Decode$int));
+var _elm_lang$mouse$Mouse$Watcher = F2(
+	function (a, b) {
+		return {taggers: a, pid: b};
+	});
+var _elm_lang$mouse$Mouse$Msg = F2(
+	function (a, b) {
+		return {category: a, position: b};
+	});
+var _elm_lang$mouse$Mouse$onEffects = F3(
+	function (router, newSubs, oldState) {
+		var rightStep = F3(
+			function (category, taggers, task) {
+				var tracker = A3(
+					_elm_lang$dom$Dom_LowLevel$onDocument,
+					category,
+					_elm_lang$mouse$Mouse$position,
+					function (_p6) {
+						return A2(
+							_elm_lang$core$Platform$sendToSelf,
+							router,
+							A2(_elm_lang$mouse$Mouse$Msg, category, _p6));
+					});
+				return A2(
+					_elm_lang$core$Task$andThen,
+					function (state) {
+						return A2(
+							_elm_lang$core$Task$andThen,
+							function (pid) {
+								return _elm_lang$core$Task$succeed(
+									A3(
+										_elm_lang$core$Dict$insert,
+										category,
+										A2(_elm_lang$mouse$Mouse$Watcher, taggers, pid),
+										state));
+							},
+							_elm_lang$core$Process$spawn(tracker));
+					},
+					task);
+			});
+		var bothStep = F4(
+			function (category, _p7, taggers, task) {
+				var _p8 = _p7;
+				return A2(
+					_elm_lang$core$Task$andThen,
+					function (state) {
+						return _elm_lang$core$Task$succeed(
+							A3(
+								_elm_lang$core$Dict$insert,
+								category,
+								A2(_elm_lang$mouse$Mouse$Watcher, taggers, _p8.pid),
+								state));
+					},
+					task);
+			});
+		var leftStep = F3(
+			function (category, _p9, task) {
+				var _p10 = _p9;
+				return A2(
+					_elm_lang$mouse$Mouse_ops['&>'],
+					_elm_lang$core$Process$kill(_p10.pid),
+					task);
+			});
+		return A6(
+			_elm_lang$core$Dict$merge,
+			leftStep,
+			bothStep,
+			rightStep,
+			oldState,
+			_elm_lang$mouse$Mouse$categorize(newSubs),
+			_elm_lang$core$Task$succeed(_elm_lang$core$Dict$empty));
+	});
+var _elm_lang$mouse$Mouse$MySub = F2(
+	function (a, b) {
+		return {ctor: 'MySub', _0: a, _1: b};
+	});
+var _elm_lang$mouse$Mouse$clicks = function (tagger) {
+	return _elm_lang$mouse$Mouse$subscription(
+		A2(_elm_lang$mouse$Mouse$MySub, 'click', tagger));
+};
+var _elm_lang$mouse$Mouse$moves = function (tagger) {
+	return _elm_lang$mouse$Mouse$subscription(
+		A2(_elm_lang$mouse$Mouse$MySub, 'mousemove', tagger));
+};
+var _elm_lang$mouse$Mouse$downs = function (tagger) {
+	return _elm_lang$mouse$Mouse$subscription(
+		A2(_elm_lang$mouse$Mouse$MySub, 'mousedown', tagger));
+};
+var _elm_lang$mouse$Mouse$ups = function (tagger) {
+	return _elm_lang$mouse$Mouse$subscription(
+		A2(_elm_lang$mouse$Mouse$MySub, 'mouseup', tagger));
+};
+var _elm_lang$mouse$Mouse$subMap = F2(
+	function (func, _p11) {
+		var _p12 = _p11;
+		return A2(
+			_elm_lang$mouse$Mouse$MySub,
+			_p12._0,
+			function (_p13) {
+				return func(
+					_p12._1(_p13));
+			});
+	});
+_elm_lang$core$Native_Platform.effectManagers['Mouse'] = {pkg: 'elm-lang/mouse', init: _elm_lang$mouse$Mouse$init, onEffects: _elm_lang$mouse$Mouse$onEffects, onSelfMsg: _elm_lang$mouse$Mouse$onSelfMsg, tag: 'sub', subMap: _elm_lang$mouse$Mouse$subMap};
+
 var _elm_lang$svg$Svg$map = _elm_lang$virtual_dom$VirtualDom$map;
 var _elm_lang$svg$Svg$text = _elm_lang$virtual_dom$VirtualDom$text;
 var _elm_lang$svg$Svg$svgNamespace = A2(
@@ -8673,9 +9458,6 @@ var _user$project$FloorPlanTypes$Location = F8(
 		return {id: a, name: b, locationType: c, details: d, extension: e, position_x: f, position_y: g, last_updated: h};
 	});
 
-var _user$project$Main$subscriptions = function (model) {
-	return _elm_lang$core$Platform_Sub$none;
-};
 var _user$project$Main$locationInfoList = function (locations) {
 	return A2(
 		_elm_lang$core$List$map,
@@ -8699,18 +9481,70 @@ var _user$project$Main$isTypeSelected = F2(
 	function (typeSelected, t) {
 		return _elm_lang$core$Native_Utils.eq(typeSelected, t);
 	});
+var _user$project$Main$px = function (i) {
+	return A2(
+		_elm_lang$core$Basics_ops['++'],
+		_elm_lang$core$Basics$toString(i),
+		'px');
+};
+var _user$project$Main$onChange = function (tagger) {
+	return A2(
+		_elm_lang$html$Html_Events$on,
+		'change',
+		A2(_elm_lang$core$Json_Decode$map, tagger, _elm_lang$html$Html_Events$targetValue));
+};
+var _user$project$Main_ops = _user$project$Main_ops || {};
+_user$project$Main_ops['=>'] = F2(
+	function (v0, v1) {
+		return {ctor: '_Tuple2', _0: v0, _1: v1};
+	});
 var _user$project$Main$viewToolTip = function (toolTip) {
 	var _p0 = toolTip;
-	if (_p0.ctor === 'Hidden') {
-		return A2(
-			_elm_lang$html$Html$div,
-			{ctor: '[]'},
-			{ctor: '[]'});
-	} else {
+	if ((_p0.ctor === 'Showing') && (_p0._1.ctor === 'Just')) {
+		var _p2 = _p0._1._0;
 		var _p1 = _p0._0;
 		return A2(
 			_elm_lang$html$Html$div,
-			{ctor: '[]'},
+			{
+				ctor: '::',
+				_0: _elm_lang$html$Html_Attributes$style(
+					{
+						ctor: '::',
+						_0: A2(_user$project$Main_ops['=>'], 'position', 'absolute'),
+						_1: {
+							ctor: '::',
+							_0: A2(
+								_user$project$Main_ops['=>'],
+								'top',
+								_user$project$Main$px(_p2.y + 10)),
+							_1: {
+								ctor: '::',
+								_0: A2(
+									_user$project$Main_ops['=>'],
+									'left',
+									_user$project$Main$px(_p2.x + 10)),
+								_1: {
+									ctor: '::',
+									_0: A2(_user$project$Main_ops['=>'], 'backgroundColor', 'white'),
+									_1: {
+										ctor: '::',
+										_0: A2(_user$project$Main_ops['=>'], 'padding', '8px'),
+										_1: {
+											ctor: '::',
+											_0: A2(_user$project$Main_ops['=>'], 'border', '2px solid black'),
+											_1: {
+												ctor: '::',
+												_0: A2(_user$project$Main_ops['=>'], 'borderRadius', '4px'),
+												_1: {ctor: '[]'}
+											}
+										}
+									}
+								}
+							}
+						}
+					}),
+				_1: {ctor: '[]'}
+			},
 			{
 				ctor: '::',
 				_0: _elm_lang$html$Html$text(
@@ -8729,24 +9563,18 @@ var _user$project$Main$viewToolTip = function (toolTip) {
 									A2(_elm_lang$core$Basics_ops['++'], '. Details:  ', _p1.details)))))),
 				_1: {ctor: '[]'}
 			});
+	} else {
+		return A2(
+			_elm_lang$html$Html$div,
+			{ctor: '[]'},
+			{ctor: '[]'});
 	}
 };
-var _user$project$Main$onChange = function (tagger) {
-	return A2(
-		_elm_lang$html$Html_Events$on,
-		'change',
-		A2(_elm_lang$core$Json_Decode$map, tagger, _elm_lang$html$Html_Events$targetValue));
-};
-var _user$project$Main_ops = _user$project$Main_ops || {};
-_user$project$Main_ops['=>'] = F2(
-	function (v0, v1) {
-		return {ctor: '_Tuple2', _0: v0, _1: v1};
-	});
 var _user$project$Main$updateFilter = F3(
 	function (filterMsg, filter, model) {
 		var filters = function () {
-			var _p2 = filterMsg;
-			if (_p2.ctor === 'Remove') {
+			var _p3 = filterMsg;
+			if (_p3.ctor === 'Remove') {
 				return A2(_user$project$Filter$remove, filter, model.filters);
 			} else {
 				return A2(_user$project$Filter$merge, filter, model.filters);
@@ -8854,13 +9682,10 @@ var _user$project$Main$Model = F7(
 	function (a, b, c, d, e, f, g) {
 		return {floorplan: a, locations: b, nameInput: c, typeSelect: d, toolTip: e, filteredLocations: f, filters: g};
 	});
-var _user$project$Main$Position = F2(
+var _user$project$Main$Showing = F2(
 	function (a, b) {
-		return {x: a, y: b};
+		return {ctor: 'Showing', _0: a, _1: b};
 	});
-var _user$project$Main$Showing = function (a) {
-	return {ctor: 'Showing', _0: a};
-};
 var _user$project$Main$Hidden = {ctor: 'Hidden'};
 var _user$project$Main$init = A2(
 	_elm_lang$core$Platform_Cmd_ops['!'],
@@ -8880,13 +9705,13 @@ var _user$project$Main$Remove = {ctor: 'Remove'};
 var _user$project$Main$Merge = {ctor: 'Merge'};
 var _user$project$Main$update = F2(
 	function (msg, model) {
-		var _p3 = msg;
-		switch (_p3.ctor) {
+		var _p4 = msg;
+		switch (_p4.ctor) {
 			case 'NameInputChange':
-				var _p5 = _p3._0;
+				var _p6 = _p4._0;
 				var filterMsg = function () {
-					var _p4 = _p5;
-					if (_p4 === '') {
+					var _p5 = _p6;
+					if (_p5 === '') {
 						return _user$project$Main$Remove;
 					} else {
 						return _user$project$Main$Merge;
@@ -8898,23 +9723,23 @@ var _user$project$Main$update = F2(
 					A2(
 						_user$project$Filter$Filter,
 						_user$project$Main$Name,
-						_user$project$Main$filterByName(_p5)),
+						_user$project$Main$filterByName(_p6)),
 					_elm_lang$core$Native_Utils.update(
 						model,
-						{nameInput: _p5}));
+						{nameInput: _p6}));
 			case 'TypeSelectChange':
-				var _p6 = _p3._0;
-				var filterMsg = _elm_lang$core$Native_Utils.eq(_p6, _user$project$Main$defaultSelect) ? _user$project$Main$Remove : _user$project$Main$Merge;
+				var _p7 = _p4._0;
+				var filterMsg = _elm_lang$core$Native_Utils.eq(_p7, _user$project$Main$defaultSelect) ? _user$project$Main$Remove : _user$project$Main$Merge;
 				return A3(
 					_user$project$Main$updateFilter,
 					filterMsg,
 					A2(
 						_user$project$Filter$Filter,
 						_user$project$Main$Type,
-						_user$project$Main$filterByType(_p6)),
+						_user$project$Main$filterByType(_p7)),
 					_elm_lang$core$Native_Utils.update(
 						model,
-						{typeSelect: _p6}));
+						{typeSelect: _p7}));
 			case 'ResetFilterForm':
 				return A2(
 					_elm_lang$core$Platform_Cmd_ops['!'],
@@ -8928,14 +9753,30 @@ var _user$project$Main$update = F2(
 						}),
 					{ctor: '[]'});
 			case 'ShowToolTip':
-				return A2(
-					_elm_lang$core$Platform_Cmd_ops['!'],
-					_elm_lang$core$Native_Utils.update(
-						model,
-						{
-							toolTip: _user$project$Main$Showing(_p3._0)
-						}),
-					{ctor: '[]'});
+				var _p9 = _p4._0;
+				var _p8 = _p4._1;
+				if (_p8.ctor === 'Nothing') {
+					return A2(
+						_elm_lang$core$Platform_Cmd_ops['!'],
+						_elm_lang$core$Native_Utils.update(
+							model,
+							{
+								toolTip: A2(_user$project$Main$Showing, _p9, _elm_lang$core$Maybe$Nothing)
+							}),
+						{ctor: '[]'});
+				} else {
+					return A2(
+						_elm_lang$core$Platform_Cmd_ops['!'],
+						_elm_lang$core$Native_Utils.update(
+							model,
+							{
+								toolTip: A2(
+									_user$project$Main$Showing,
+									_p9,
+									_elm_lang$core$Maybe$Just(_p8._0))
+							}),
+						{ctor: '[]'});
+				}
 			default:
 				return A2(
 					_elm_lang$core$Platform_Cmd_ops['!'],
@@ -8946,9 +9787,10 @@ var _user$project$Main$update = F2(
 		}
 	});
 var _user$project$Main$HideToolTip = {ctor: 'HideToolTip'};
-var _user$project$Main$ShowToolTip = function (a) {
-	return {ctor: 'ShowToolTip', _0: a};
-};
+var _user$project$Main$ShowToolTip = F2(
+	function (a, b) {
+		return {ctor: 'ShowToolTip', _0: a, _1: b};
+	});
 var _user$project$Main$plotLocation = function (location) {
 	return A2(
 		_elm_lang$svg$Svg$circle,
@@ -8972,7 +9814,7 @@ var _user$project$Main$plotLocation = function (location) {
 							_1: {
 								ctor: '::',
 								_0: _elm_lang$html$Html_Events$onMouseEnter(
-									_user$project$Main$ShowToolTip(location)),
+									A2(_user$project$Main$ShowToolTip, location, _elm_lang$core$Maybe$Nothing)),
 								_1: {
 									ctor: '::',
 									_0: _elm_lang$html$Html_Events$onMouseLeave(_user$project$Main$HideToolTip),
@@ -9027,6 +9869,25 @@ var _user$project$Main$svgMap = F2(
 			},
 			_user$project$Main$plotLocations(locations));
 	});
+var _user$project$Main$subscriptions = function (model) {
+	var _p10 = model.toolTip;
+	if ((_p10.ctor === 'Showing') && (_p10._1.ctor === 'Nothing')) {
+		return _elm_lang$core$Platform_Sub$batch(
+			{
+				ctor: '::',
+				_0: _elm_lang$mouse$Mouse$moves(
+					function (x) {
+						return A2(
+							_user$project$Main$ShowToolTip,
+							_p10._0,
+							_elm_lang$core$Maybe$Just(x));
+					}),
+				_1: {ctor: '[]'}
+			});
+	} else {
+		return _elm_lang$core$Platform_Sub$none;
+	}
+};
 var _user$project$Main$ResetFilterForm = {ctor: 'ResetFilterForm'};
 var _user$project$Main$TypeSelectChange = function (a) {
 	return {ctor: 'TypeSelectChange', _0: a};
@@ -9086,8 +9947,8 @@ var _user$project$Main$filterForm = F2(
 				}
 			});
 	});
-var _user$project$Main$viewFilterLocations = function (_p7) {
-	var _p8 = _p7;
+var _user$project$Main$viewFilterLocations = function (_p11) {
+	var _p12 = _p11;
 	return A2(
 		_elm_lang$html$Html$div,
 		{ctor: '[]'},
@@ -9103,13 +9964,13 @@ var _user$project$Main$viewFilterLocations = function (_p7) {
 				}),
 			_1: {
 				ctor: '::',
-				_0: A2(_user$project$Main$filterForm, _p8.nameInput, _p8.typeSelect),
+				_0: A2(_user$project$Main$filterForm, _p12.nameInput, _p12.typeSelect),
 				_1: {
 					ctor: '::',
 					_0: A2(
 						_elm_lang$html$Html$div,
 						{ctor: '[]'},
-						_user$project$Main$locationInfoList(_p8.filteredLocations)),
+						_user$project$Main$locationInfoList(_p12.filteredLocations)),
 					_1: {ctor: '[]'}
 				}
 			}

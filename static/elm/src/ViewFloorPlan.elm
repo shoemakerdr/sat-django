@@ -36,6 +36,7 @@ import Svg.Attributes as SvgAttr
         , fill
         , fillOpacity
         )
+import Mouse exposing (Position)
 import Json.Decode as Json
 import FloorPlanTypes exposing (..)
 import Filter exposing (Filter(..))
@@ -86,11 +87,7 @@ type alias Model =
 
 type ToolTip
     = Hidden
-    | Showing Location
-
-
-type alias Position =
-    { x : Float, y : Float }
+    | Showing Location (Maybe Mouse.Position)
 
 
 type FilterType
@@ -111,7 +108,7 @@ type Msg
     = NameInputChange String
     | TypeSelectChange String
     | ResetFilterForm
-    | ShowToolTip Location
+    | ShowToolTip Location (Maybe Mouse.Position)
     | HideToolTip
 
 
@@ -149,8 +146,13 @@ update msg model =
             }
                 ! []
 
-        ShowToolTip location ->
-            { model | toolTip = Showing location } ! []
+        ShowToolTip location position ->
+            case position of
+                Nothing ->
+                    { model | toolTip = Showing location Nothing } ! []
+
+                Just pos ->
+                    { model | toolTip = Showing location (Just pos) } ! []
 
         HideToolTip ->
             { model | toolTip = Hidden } ! []
@@ -245,7 +247,7 @@ plotLocation location =
         , r "8"
         , fill "gray"
         , fillOpacity "0.5"
-        , onMouseEnter (ShowToolTip location)
+        , onMouseEnter (ShowToolTip location Nothing)
         , onMouseLeave HideToolTip
         ]
         []
@@ -254,12 +256,18 @@ plotLocation location =
 viewToolTip : ToolTip -> Html Msg
 viewToolTip toolTip =
     case toolTip of
-        Hidden ->
-            div [] []
-
-        Showing location ->
+        Showing location (Just pos) ->
             div
-                []
+                [ style
+                    [ "position" => "absolute"
+                    , "top" => px (pos.y + 10)
+                    , "left" => px (pos.x + 10)
+                    , "backgroundColor" => "white"
+                    , "padding" => "8px"
+                    , "border" => "2px solid black"
+                    , "borderRadius" => "4px"
+                    ]
+                ]
                 [ text <|
                     "The "
                         ++ location.name
@@ -268,6 +276,14 @@ viewToolTip toolTip =
                         ++ ". Details:  "
                         ++ location.details
                 ]
+
+        _ ->
+            div [] []
+
+
+px : Int -> String
+px i =
+    toString i ++ "px"
 
 
 viewFilterLocations : Model -> Html Msg
@@ -342,7 +358,12 @@ locationInfoList locations =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Sub.none
+    case model.toolTip of
+        Showing loc Nothing ->
+            Sub.batch [ Mouse.moves (\x -> ShowToolTip loc (Just x)) ]
+
+        _ ->
+            Sub.none
 
 
 
