@@ -8699,36 +8699,37 @@ var _user$project$Main$isTypeSelected = F2(
 	function (typeSelected, t) {
 		return _elm_lang$core$Native_Utils.eq(typeSelected, t);
 	});
-var _user$project$Main$plotLocation = function (location) {
-	return A2(
-		_elm_lang$svg$Svg$circle,
-		{
-			ctor: '::',
-			_0: _elm_lang$svg$Svg_Attributes$cx(
-				_elm_lang$core$Basics$toString(location.position_x * 600)),
-			_1: {
+var _user$project$Main$viewToolTip = function (toolTip) {
+	var _p0 = toolTip;
+	if (_p0.ctor === 'Hidden') {
+		return A2(
+			_elm_lang$html$Html$div,
+			{ctor: '[]'},
+			{ctor: '[]'});
+	} else {
+		var _p1 = _p0._0;
+		return A2(
+			_elm_lang$html$Html$div,
+			{ctor: '[]'},
+			{
 				ctor: '::',
-				_0: _elm_lang$svg$Svg_Attributes$cy(
-					_elm_lang$core$Basics$toString(location.position_y * 400)),
-				_1: {
-					ctor: '::',
-					_0: _elm_lang$svg$Svg_Attributes$r('8'),
-					_1: {
-						ctor: '::',
-						_0: _elm_lang$svg$Svg_Attributes$fill('gray'),
-						_1: {
-							ctor: '::',
-							_0: _elm_lang$svg$Svg_Attributes$fillOpacity('0.5'),
-							_1: {ctor: '[]'}
-						}
-					}
-				}
-			}
-		},
-		{ctor: '[]'});
-};
-var _user$project$Main$plotLocations = function (locations) {
-	return A2(_elm_lang$core$List$map, _user$project$Main$plotLocation, locations);
+				_0: _elm_lang$html$Html$text(
+					A2(
+						_elm_lang$core$Basics_ops['++'],
+						'The ',
+						A2(
+							_elm_lang$core$Basics_ops['++'],
+							_p1.name,
+							A2(
+								_elm_lang$core$Basics_ops['++'],
+								' is a ',
+								A2(
+									_elm_lang$core$Basics_ops['++'],
+									_p1.locationType,
+									A2(_elm_lang$core$Basics_ops['++'], '. Details:  ', _p1.details)))))),
+				_1: {ctor: '[]'}
+			});
+	}
 };
 var _user$project$Main$onChange = function (tagger) {
 	return A2(
@@ -8741,49 +8742,11 @@ _user$project$Main_ops['=>'] = F2(
 	function (v0, v1) {
 		return {ctor: '_Tuple2', _0: v0, _1: v1};
 	});
-var _user$project$Main$svgMap = F2(
-	function (floorplan, locations) {
-		return A2(
-			_elm_lang$svg$Svg$svg,
-			{
-				ctor: '::',
-				_0: _elm_lang$svg$Svg_Attributes$width('600'),
-				_1: {
-					ctor: '::',
-					_0: _elm_lang$svg$Svg_Attributes$height('400'),
-					_1: {
-						ctor: '::',
-						_0: _elm_lang$html$Html_Attributes$style(
-							{
-								ctor: '::',
-								_0: A2(
-									_user$project$Main_ops['=>'],
-									'background',
-									A2(
-										_elm_lang$core$Basics_ops['++'],
-										'url(',
-										A2(_elm_lang$core$Basics_ops['++'], floorplan.src, ')'))),
-								_1: {
-									ctor: '::',
-									_0: A2(_user$project$Main_ops['=>'], 'backgroundSize', '100% auto'),
-									_1: {
-										ctor: '::',
-										_0: A2(_user$project$Main_ops['=>'], 'backgroundRepeat', 'no-repeat'),
-										_1: {ctor: '[]'}
-									}
-								}
-							}),
-						_1: {ctor: '[]'}
-					}
-				}
-			},
-			_user$project$Main$plotLocations(locations));
-	});
 var _user$project$Main$updateFilter = F3(
 	function (filterMsg, filter, model) {
 		var filters = function () {
-			var _p0 = filterMsg;
-			if (_p0.ctor === 'Remove') {
+			var _p2 = filterMsg;
+			if (_p2.ctor === 'Remove') {
 				return A2(_user$project$Filter$remove, filter, model.filters);
 			} else {
 				return A2(_user$project$Filter$merge, filter, model.filters);
@@ -8811,17 +8774,6 @@ var _user$project$Main$filterByName = F2(
 			_elm_lang$core$String$toLower(location.name));
 	});
 var _user$project$Main$defaultSelect = '-- Select type --';
-var _user$project$Main$init = A2(
-	_elm_lang$core$Platform_Cmd_ops['!'],
-	{
-		floorplan: _user$project$FloorPlanTypes$floorplanSample,
-		locations: _user$project$FloorPlanTypes$locationListSample,
-		nameInput: '',
-		typeSelect: _user$project$Main$defaultSelect,
-		filteredLocations: _user$project$FloorPlanTypes$locationListSample,
-		filters: {ctor: '[]'}
-	},
-	{ctor: '[]'});
 var _user$project$Main$optionList = function (typeSelected) {
 	var initialOption = {
 		ctor: '::',
@@ -8898,23 +8850,43 @@ var _user$project$Main$optionList = function (typeSelected) {
 			},
 			options));
 };
-var _user$project$Main$Model = F6(
-	function (a, b, c, d, e, f) {
-		return {floorplan: a, locations: b, nameInput: c, typeSelect: d, filteredLocations: e, filters: f};
+var _user$project$Main$Model = F7(
+	function (a, b, c, d, e, f, g) {
+		return {floorplan: a, locations: b, nameInput: c, typeSelect: d, toolTip: e, filteredLocations: f, filters: g};
 	});
+var _user$project$Main$Position = F2(
+	function (a, b) {
+		return {x: a, y: b};
+	});
+var _user$project$Main$Showing = function (a) {
+	return {ctor: 'Showing', _0: a};
+};
+var _user$project$Main$Hidden = {ctor: 'Hidden'};
+var _user$project$Main$init = A2(
+	_elm_lang$core$Platform_Cmd_ops['!'],
+	{
+		floorplan: _user$project$FloorPlanTypes$floorplanSample,
+		locations: _user$project$FloorPlanTypes$locationListSample,
+		nameInput: '',
+		typeSelect: _user$project$Main$defaultSelect,
+		toolTip: _user$project$Main$Hidden,
+		filteredLocations: _user$project$FloorPlanTypes$locationListSample,
+		filters: {ctor: '[]'}
+	},
+	{ctor: '[]'});
 var _user$project$Main$Type = {ctor: 'Type'};
 var _user$project$Main$Name = {ctor: 'Name'};
 var _user$project$Main$Remove = {ctor: 'Remove'};
 var _user$project$Main$Merge = {ctor: 'Merge'};
 var _user$project$Main$update = F2(
 	function (msg, model) {
-		var _p1 = msg;
-		switch (_p1.ctor) {
+		var _p3 = msg;
+		switch (_p3.ctor) {
 			case 'NameInputChange':
-				var _p3 = _p1._0;
+				var _p5 = _p3._0;
 				var filterMsg = function () {
-					var _p2 = _p3;
-					if (_p2 === '') {
+					var _p4 = _p5;
+					if (_p4 === '') {
 						return _user$project$Main$Remove;
 					} else {
 						return _user$project$Main$Merge;
@@ -8926,24 +8898,24 @@ var _user$project$Main$update = F2(
 					A2(
 						_user$project$Filter$Filter,
 						_user$project$Main$Name,
-						_user$project$Main$filterByName(_p3)),
+						_user$project$Main$filterByName(_p5)),
 					_elm_lang$core$Native_Utils.update(
 						model,
-						{nameInput: _p3}));
+						{nameInput: _p5}));
 			case 'TypeSelectChange':
-				var _p4 = _p1._0;
-				var filterMsg = _elm_lang$core$Native_Utils.eq(_p4, _user$project$Main$defaultSelect) ? _user$project$Main$Remove : _user$project$Main$Merge;
+				var _p6 = _p3._0;
+				var filterMsg = _elm_lang$core$Native_Utils.eq(_p6, _user$project$Main$defaultSelect) ? _user$project$Main$Remove : _user$project$Main$Merge;
 				return A3(
 					_user$project$Main$updateFilter,
 					filterMsg,
 					A2(
 						_user$project$Filter$Filter,
 						_user$project$Main$Type,
-						_user$project$Main$filterByType(_p4)),
+						_user$project$Main$filterByType(_p6)),
 					_elm_lang$core$Native_Utils.update(
 						model,
-						{typeSelect: _p4}));
-			default:
+						{typeSelect: _p6}));
+			case 'ResetFilterForm':
 				return A2(
 					_elm_lang$core$Platform_Cmd_ops['!'],
 					_elm_lang$core$Native_Utils.update(
@@ -8955,7 +8927,105 @@ var _user$project$Main$update = F2(
 							filters: {ctor: '[]'}
 						}),
 					{ctor: '[]'});
+			case 'ShowToolTip':
+				return A2(
+					_elm_lang$core$Platform_Cmd_ops['!'],
+					_elm_lang$core$Native_Utils.update(
+						model,
+						{
+							toolTip: _user$project$Main$Showing(_p3._0)
+						}),
+					{ctor: '[]'});
+			default:
+				return A2(
+					_elm_lang$core$Platform_Cmd_ops['!'],
+					_elm_lang$core$Native_Utils.update(
+						model,
+						{toolTip: _user$project$Main$Hidden}),
+					{ctor: '[]'});
 		}
+	});
+var _user$project$Main$HideToolTip = {ctor: 'HideToolTip'};
+var _user$project$Main$ShowToolTip = function (a) {
+	return {ctor: 'ShowToolTip', _0: a};
+};
+var _user$project$Main$plotLocation = function (location) {
+	return A2(
+		_elm_lang$svg$Svg$circle,
+		{
+			ctor: '::',
+			_0: _elm_lang$svg$Svg_Attributes$cx(
+				_elm_lang$core$Basics$toString(location.position_x * 600)),
+			_1: {
+				ctor: '::',
+				_0: _elm_lang$svg$Svg_Attributes$cy(
+					_elm_lang$core$Basics$toString(location.position_y * 400)),
+				_1: {
+					ctor: '::',
+					_0: _elm_lang$svg$Svg_Attributes$r('8'),
+					_1: {
+						ctor: '::',
+						_0: _elm_lang$svg$Svg_Attributes$fill('gray'),
+						_1: {
+							ctor: '::',
+							_0: _elm_lang$svg$Svg_Attributes$fillOpacity('0.5'),
+							_1: {
+								ctor: '::',
+								_0: _elm_lang$html$Html_Events$onMouseEnter(
+									_user$project$Main$ShowToolTip(location)),
+								_1: {
+									ctor: '::',
+									_0: _elm_lang$html$Html_Events$onMouseLeave(_user$project$Main$HideToolTip),
+									_1: {ctor: '[]'}
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		{ctor: '[]'});
+};
+var _user$project$Main$plotLocations = function (locations) {
+	return A2(_elm_lang$core$List$map, _user$project$Main$plotLocation, locations);
+};
+var _user$project$Main$svgMap = F2(
+	function (floorplan, locations) {
+		return A2(
+			_elm_lang$svg$Svg$svg,
+			{
+				ctor: '::',
+				_0: _elm_lang$svg$Svg_Attributes$width('600'),
+				_1: {
+					ctor: '::',
+					_0: _elm_lang$svg$Svg_Attributes$height('400'),
+					_1: {
+						ctor: '::',
+						_0: _elm_lang$html$Html_Attributes$style(
+							{
+								ctor: '::',
+								_0: A2(
+									_user$project$Main_ops['=>'],
+									'background',
+									A2(
+										_elm_lang$core$Basics_ops['++'],
+										'url(',
+										A2(_elm_lang$core$Basics_ops['++'], floorplan.src, ')'))),
+								_1: {
+									ctor: '::',
+									_0: A2(_user$project$Main_ops['=>'], 'backgroundSize', '100% auto'),
+									_1: {
+										ctor: '::',
+										_0: A2(_user$project$Main_ops['=>'], 'backgroundRepeat', 'no-repeat'),
+										_1: {ctor: '[]'}
+									}
+								}
+							}),
+						_1: {ctor: '[]'}
+					}
+				}
+			},
+			_user$project$Main$plotLocations(locations));
 	});
 var _user$project$Main$ResetFilterForm = {ctor: 'ResetFilterForm'};
 var _user$project$Main$TypeSelectChange = function (a) {
@@ -9016,8 +9086,8 @@ var _user$project$Main$filterForm = F2(
 				}
 			});
 	});
-var _user$project$Main$viewFilterLocations = function (_p5) {
-	var _p6 = _p5;
+var _user$project$Main$viewFilterLocations = function (_p7) {
+	var _p8 = _p7;
 	return A2(
 		_elm_lang$html$Html$div,
 		{ctor: '[]'},
@@ -9033,13 +9103,13 @@ var _user$project$Main$viewFilterLocations = function (_p5) {
 				}),
 			_1: {
 				ctor: '::',
-				_0: A2(_user$project$Main$filterForm, _p6.nameInput, _p6.typeSelect),
+				_0: A2(_user$project$Main$filterForm, _p8.nameInput, _p8.typeSelect),
 				_1: {
 					ctor: '::',
 					_0: A2(
 						_elm_lang$html$Html$div,
 						{ctor: '[]'},
-						_user$project$Main$locationInfoList(_p6.filteredLocations)),
+						_user$project$Main$locationInfoList(_p8.filteredLocations)),
 					_1: {ctor: '[]'}
 				}
 			}
@@ -9090,7 +9160,11 @@ var _user$project$Main$view = function (model) {
 							_1: {ctor: '[]'}
 						}
 					}),
-				_1: {ctor: '[]'}
+				_1: {
+					ctor: '::',
+					_0: _user$project$Main$viewToolTip(model.toolTip),
+					_1: {ctor: '[]'}
+				}
 			}
 		});
 };
