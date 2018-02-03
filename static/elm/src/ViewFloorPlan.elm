@@ -8,6 +8,7 @@ import Html
         , text
         , p
         , h1
+        , strong
         , button
         , input
         , select
@@ -203,7 +204,14 @@ onChange tagger =
 view : Model -> Html Msg
 view model =
     div []
-        [ h1 [] [ text model.floorplan.name ]
+        [ h1
+            [ style
+                [ "textAlign" => "center"
+                , "color" => "#1c476b"
+                , "fontSize" => "48px"
+                ]
+            ]
+            [ text model.floorplan.name ]
         , div
             [ style
                 [ "display" => "flex"
@@ -262,19 +270,30 @@ viewToolTip toolTip =
                     [ "position" => "absolute"
                     , "top" => px (pos.y + 10)
                     , "left" => px (pos.x + 10)
-                    , "backgroundColor" => "white"
+                    , "backgroundColor" => "#fcf7ef"
                     , "padding" => "8px"
-                    , "border" => "2px solid black"
+                    , "border" => "4px solid #1c476b"
                     , "borderRadius" => "4px"
                     ]
                 ]
-                [ text <|
-                    "The "
-                        ++ location.name
-                        ++ " is a "
-                        ++ location.locationType
-                        ++ ". Details:  "
-                        ++ location.details
+                [ div [ style [ "font-family" => "monospace" ] ]
+                    [ p []
+                        [ strong [] [ text "Name: " ]
+                        , text location.name
+                        ]
+                    , p []
+                        [ strong [] [ text "Ext: " ]
+                        , text location.extension
+                        ]
+                    , p []
+                        [ strong [] [ text "Details: " ]
+                        , text location.details
+                        ]
+                    , p []
+                        [ strong [] [ text "Type: " ]
+                        , text location.locationType
+                        ]
+                    ]
                 ]
 
         _ ->
@@ -289,7 +308,7 @@ px i =
 viewFilterLocations : Model -> Html Msg
 viewFilterLocations { filteredLocations, nameInput, typeSelect } =
     div []
-        [ h1 [] [ text "Locations" ]
+        [ h1 [ style [ "marginTop" => "0" ] ] [ text "Locations" ]
         , filterForm nameInput typeSelect
         , div [] <| locationInfoList filteredLocations
         ]

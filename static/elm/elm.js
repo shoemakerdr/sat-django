@@ -9429,7 +9429,7 @@ var _user$project$Filter$Filter = F2(
 
 var _user$project$FloorPlanTypes$newLocation = F5(
 	function (id, name, locationType, x, y) {
-		return {id: id, name: name, locationType: locationType, details: 'Some details', extension: 'ext. 8000', position_x: x, position_y: y, last_updated: 1517108599541};
+		return {id: id, name: name, locationType: locationType, details: 'Some details', extension: '8000', position_x: x, position_y: y, last_updated: 1517108599541};
 	});
 var _user$project$FloorPlanTypes$locationListSample = {
 	ctor: '::',
@@ -9525,13 +9525,13 @@ var _user$project$Main$viewToolTip = function (toolTip) {
 									_user$project$Main$px(_p2.x + 10)),
 								_1: {
 									ctor: '::',
-									_0: A2(_user$project$Main_ops['=>'], 'backgroundColor', 'white'),
+									_0: A2(_user$project$Main_ops['=>'], 'backgroundColor', '#fcf7ef'),
 									_1: {
 										ctor: '::',
 										_0: A2(_user$project$Main_ops['=>'], 'padding', '8px'),
 										_1: {
 											ctor: '::',
-											_0: A2(_user$project$Main_ops['=>'], 'border', '2px solid black'),
+											_0: A2(_user$project$Main_ops['=>'], 'border', '4px solid #1c476b'),
 											_1: {
 												ctor: '::',
 												_0: A2(_user$project$Main_ops['=>'], 'borderRadius', '4px'),
@@ -9547,20 +9547,107 @@ var _user$project$Main$viewToolTip = function (toolTip) {
 			},
 			{
 				ctor: '::',
-				_0: _elm_lang$html$Html$text(
-					A2(
-						_elm_lang$core$Basics_ops['++'],
-						'The ',
-						A2(
-							_elm_lang$core$Basics_ops['++'],
-							_p1.name,
-							A2(
-								_elm_lang$core$Basics_ops['++'],
-								' is a ',
-								A2(
-									_elm_lang$core$Basics_ops['++'],
-									_p1.locationType,
-									A2(_elm_lang$core$Basics_ops['++'], '. Details:  ', _p1.details)))))),
+				_0: A2(
+					_elm_lang$html$Html$div,
+					{
+						ctor: '::',
+						_0: _elm_lang$html$Html_Attributes$style(
+							{
+								ctor: '::',
+								_0: A2(_user$project$Main_ops['=>'], 'font-family', 'monospace'),
+								_1: {ctor: '[]'}
+							}),
+						_1: {ctor: '[]'}
+					},
+					{
+						ctor: '::',
+						_0: A2(
+							_elm_lang$html$Html$p,
+							{ctor: '[]'},
+							{
+								ctor: '::',
+								_0: A2(
+									_elm_lang$html$Html$strong,
+									{ctor: '[]'},
+									{
+										ctor: '::',
+										_0: _elm_lang$html$Html$text('Name: '),
+										_1: {ctor: '[]'}
+									}),
+								_1: {
+									ctor: '::',
+									_0: _elm_lang$html$Html$text(_p1.name),
+									_1: {ctor: '[]'}
+								}
+							}),
+						_1: {
+							ctor: '::',
+							_0: A2(
+								_elm_lang$html$Html$p,
+								{ctor: '[]'},
+								{
+									ctor: '::',
+									_0: A2(
+										_elm_lang$html$Html$strong,
+										{ctor: '[]'},
+										{
+											ctor: '::',
+											_0: _elm_lang$html$Html$text('Ext: '),
+											_1: {ctor: '[]'}
+										}),
+									_1: {
+										ctor: '::',
+										_0: _elm_lang$html$Html$text(_p1.extension),
+										_1: {ctor: '[]'}
+									}
+								}),
+							_1: {
+								ctor: '::',
+								_0: A2(
+									_elm_lang$html$Html$p,
+									{ctor: '[]'},
+									{
+										ctor: '::',
+										_0: A2(
+											_elm_lang$html$Html$strong,
+											{ctor: '[]'},
+											{
+												ctor: '::',
+												_0: _elm_lang$html$Html$text('Details: '),
+												_1: {ctor: '[]'}
+											}),
+										_1: {
+											ctor: '::',
+											_0: _elm_lang$html$Html$text(_p1.details),
+											_1: {ctor: '[]'}
+										}
+									}),
+								_1: {
+									ctor: '::',
+									_0: A2(
+										_elm_lang$html$Html$p,
+										{ctor: '[]'},
+										{
+											ctor: '::',
+											_0: A2(
+												_elm_lang$html$Html$strong,
+												{ctor: '[]'},
+												{
+													ctor: '::',
+													_0: _elm_lang$html$Html$text('Type: '),
+													_1: {ctor: '[]'}
+												}),
+											_1: {
+												ctor: '::',
+												_0: _elm_lang$html$Html$text(_p1.locationType),
+												_1: {ctor: '[]'}
+											}
+										}),
+									_1: {ctor: '[]'}
+								}
+							}
+						}
+					}),
 				_1: {ctor: '[]'}
 			});
 	} else {
@@ -9956,7 +10043,16 @@ var _user$project$Main$viewFilterLocations = function (_p11) {
 			ctor: '::',
 			_0: A2(
 				_elm_lang$html$Html$h1,
-				{ctor: '[]'},
+				{
+					ctor: '::',
+					_0: _elm_lang$html$Html_Attributes$style(
+						{
+							ctor: '::',
+							_0: A2(_user$project$Main_ops['=>'], 'marginTop', '0'),
+							_1: {ctor: '[]'}
+						}),
+					_1: {ctor: '[]'}
+				},
 				{
 					ctor: '::',
 					_0: _elm_lang$html$Html$text('Locations'),
@@ -9984,7 +10080,24 @@ var _user$project$Main$view = function (model) {
 			ctor: '::',
 			_0: A2(
 				_elm_lang$html$Html$h1,
-				{ctor: '[]'},
+				{
+					ctor: '::',
+					_0: _elm_lang$html$Html_Attributes$style(
+						{
+							ctor: '::',
+							_0: A2(_user$project$Main_ops['=>'], 'textAlign', 'center'),
+							_1: {
+								ctor: '::',
+								_0: A2(_user$project$Main_ops['=>'], 'color', '#1c476b'),
+								_1: {
+									ctor: '::',
+									_0: A2(_user$project$Main_ops['=>'], 'fontSize', '48px'),
+									_1: {ctor: '[]'}
+								}
+							}
+						}),
+					_1: {ctor: '[]'}
+				},
 				{
 					ctor: '::',
 					_0: _elm_lang$html$Html$text(model.floorplan.name),
