@@ -11,8 +11,8 @@ type alias FloorPlan =
     { id : Int
     , name : String
     , src : String
-    , widthOffset : Float
-    , heightOffset : Float
+    , widthRatio : Float
+    , heightRatio : Float
     }
 
 
@@ -33,8 +33,8 @@ floorplanSample =
     { id = 1
     , name = "My House"
     , src = "src/floor-plan.jpg"
-    , widthOffset = 1.0
-    , heightOffset = 1.0
+    , widthRatio = 1.0
+    , heightRatio = 0.6667
     }
 
 
