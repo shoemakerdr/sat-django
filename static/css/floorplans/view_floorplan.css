@@ -1,0 +1,62 @@
+
+.floorplan-name {
+  margin: 0;
+  text-align: center;
+  color: #1c476b;
+  font-size: 48px;
+}
+
+
+.floorplan-main-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.floorplan-map-wrapper {
+  padding: 8px;
+  background-color: white;
+  border: 2px solid #1c476b;
+  border-radius: 4px;
+}
+
+.location-point:hover {
+  fill: blue;
+}
+
+.tooltip-wrapper {
+  position: absolute;
+  background-color: #fcf7ef;
+  padding: 8px;
+  border: 4px solid #1c476b;
+  border-radius: 4px;
+}
+
+.location-filter-wrapper {
+  margin-bottom: 20px;
+}
+
+.location-title {
+  text-align: center;
+  color: #1c476b;
+}
+
+.location-list {
+  margin: 24px 0 16px 0; 
+  height: 200px;
+  overflow: auto;
+  background-color: white;
+  border: 2px solid #1c476b;
+  border-radius: 4px;
+  padding: 0 8px;
+}
+
+.form-name-input {
+  margin-right: 8px;
+}
+
+.form-select-type {
+  margin-right: 8px;
+}
+
