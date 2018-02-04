@@ -1,6 +1,7 @@
 body {
   margin: 0;
   font-family: monospace;
+  background-color: #fcf7ef;
 }
 
 .navbar {
@@ -33,8 +34,67 @@ body {
   font-family: monospace;
   font-size: 24px;
   color: #1c476b;
+  transition: color .3s ease-in-out;
 }
 
 .nav-link:hover {
   color: #72acdc;
+  transition: color .3s ease-in-out;
+}
+
+input {
+  font-family: monospace;
+  font-size: 16px;
+  height: 34px;
+  padding: 0 4px;
+  background-color: white;
+  border: none;
+  border: 2px solid #1c476b;
+  border-radius: 4px;
+  transition: border .3s ease-in-out;
+}
+
+input:hover {
+  background-color: #72acdc;
+  transition: background-color .3s ease-in-out;
+}
+
+input:focus {
+  outline:none;
+  background-color: white;
+  border: 2px solid #72acdc;
+  transition: all .3s ease-in-out;
+}
+
+select {
+  font-family: monospace;
+  font-size: 16px;
+  width: 200px;
+  padding: 8px;
+  border: 2px solid #1c476b;
+  background: white;
+  border-radius: 4px;
+  height: 38px !important;
+  transition: background-color .3s ease-in-out;
+}
+
+select:hover {
+  background-color: #72acdc;
+  transition: background-color .3s ease-in-out;
+}
+
+button {
+  font-family: monospace;
+  font-size: 16px;
+  background-color: white;
+  padding: 8px;
+  border: 2px solid #1c476b;
+  border-radius: 4px;
+  transition: background-color .3s ease-in-out;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #72acdc;
+  transition: background-color .3s ease-in-out;
 }
