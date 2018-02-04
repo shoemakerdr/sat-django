@@ -46,6 +46,8 @@ import Svg.Attributes as SvgAttr
         , fillOpacity
         )
 import Mouse exposing (Position)
+import Window exposing (Size)
+import Task
 import Json.Decode as Json
 import FloorPlanTypes exposing (..)
 import Filter exposing (Filter(..))
@@ -75,8 +77,9 @@ init =
     , toolTip = Hidden
     , filteredLocations = locationListSample
     , filters = []
+    , floorplanDimensions = Nothing
     }
-        ! []
+        ! [ Task.perform ResizeFloorplan Window.size ]
 
 
 
@@ -91,6 +94,13 @@ type alias Model =
     , toolTip : ToolTip
     , filteredLocations : List Location
     , filters : List (Filter FilterType Location)
+    , floorplanDimensions : Maybe Dimensions
+    }
+
+
+type alias Dimensions =
+    { width : Float
+    , height : Float
     }
 
 
@@ -119,6 +129,7 @@ type Msg
     | ResetFilterForm
     | ShowToolTip Location (Maybe Mouse.Position)
     | HideToolTip
+    | ResizeFloorplan Size
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -165,6 +176,20 @@ update msg model =
 
         HideToolTip ->
             { model | toolTip = Hidden } ! []
+
+        ResizeFloorplan size ->
+            { model | floorplanDimensions = Just <| getFloorplanDimensions size model.floorplan } ! []
+
+
+getFloorplanDimensions : Size -> FloorPlan -> Dimensions
+getFloorplanDimensions size floorplan =
+    let
+        width =
+            0.7 * (toFloat size.width)
+    in
+        { width = width
+        , height = width * floorplan.heightRatio
+        }
 
 
 filterByName : String -> Location -> Bool
@@ -218,42 +243,51 @@ view model =
         , div
             [ class "floorplan-main-content" ]
             [ viewFilterLocations model
-            , svgMap model.floorplan model.filteredLocations
+            , svgMap model.floorplan model.floorplanDimensions model.filteredLocations
             ]
         , viewToolTip model.toolTip
         ]
 
 
-svgMap : FloorPlan -> List Location -> Html Msg
-svgMap floorplan locations =
-    div [ class "floorplan-map-wrapper" ]
-        [ svg
-            [ width "600"
-            , height "400"
-            , style
-                [ "background" => ("url(" ++ floorplan.src ++ ")")
-                , "backgroundSize" => "100% auto"
-                , "backgroundRepeat" => "no-repeat"
+svgMap : FloorPlan -> Maybe Dimensions -> List Location -> Html Msg
+svgMap floorplan dimensions locations =
+    case dimensions of
+        Nothing ->
+            div [] []
+
+        Just dims ->
+            div [ class "floorplan-map-wrapper" ]
+                [ svg
+                    [ width <| toString dims.width
+                    , height <| toString dims.height
+                    , style
+                        [ "background" => ("url(" ++ floorplan.src ++ ")")
+                        , "backgroundSize" => "100% auto"
+                        , "backgroundRepeat" => "no-repeat"
+                        ]
+                    ]
+                  <|
+                    plotLocations dims locations
                 ]
-            ]
-          <|
-            List.map plotLocation locations
-        ]
 
 
-plotLocation : Location -> Html Msg
-plotLocation location =
-    circle
-        [ SvgAttr.class "location-point"
-        , cx (toString <| location.position_x * 600)
-        , cy (toString <| location.position_y * 400)
-        , r "8"
-        , fill "#72acdc"
-        , fillOpacity "0.5"
-        , onMouseEnter (ShowToolTip location Nothing)
-        , onMouseLeave HideToolTip
-        ]
-        []
+plotLocations : Dimensions -> List Location -> List (Html Msg)
+plotLocations dimensions locations =
+    locations
+        |> List.map
+            (\location ->
+                circle
+                    [ SvgAttr.class "location-point"
+                    , cx (toString <| location.position_x * dimensions.width)
+                    , cy (toString <| location.position_y * dimensions.height)
+                    , r "8"
+                    , fill "#72acdc"
+                    , fillOpacity "0.5"
+                    , onMouseEnter (ShowToolTip location Nothing)
+                    , onMouseLeave HideToolTip
+                    ]
+                    []
+            )
 
 
 viewToolTip : ToolTip -> Html Msg
