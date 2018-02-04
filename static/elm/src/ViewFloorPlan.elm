@@ -25,7 +25,15 @@ import Html.Attributes
         , placeholder
         , value
         )
-import Html.Events exposing (onClick, onInput, onMouseEnter, onMouseLeave, on, targetValue)
+import Html.Events
+    exposing
+        ( onClick
+        , onInput
+        , onMouseEnter
+        , onMouseLeave
+        , on
+        , targetValue
+        )
 import Svg exposing (svg, circle)
 import Svg.Attributes as SvgAttr
     exposing
@@ -205,22 +213,12 @@ view : Model -> Html Msg
 view model =
     div []
         [ h1
-            [ style
-                [ "textAlign" => "center"
-                , "color" => "#1c476b"
-                , "fontSize" => "48px"
-                ]
-            ]
+            [ class "floorplan-name" ]
             [ text model.floorplan.name ]
         , div
-            [ style
-                [ "display" => "flex"
-                , "justify-content" => "space-around"
-                , "align-items" => "flex-start"
-                ]
-            ]
-            [ svgMap model.floorplan model.filteredLocations
-            , viewFilterLocations model
+            [ class "floorplan-main-content" ]
+            [ viewFilterLocations model
+            , svgMap model.floorplan model.filteredLocations
             ]
         , viewToolTip model.toolTip
         ]
@@ -228,32 +226,29 @@ view model =
 
 svgMap : FloorPlan -> List Location -> Html Msg
 svgMap floorplan locations =
-    svg
-        [ width "600"
-        , height "400"
-        , style
-            [ "background" => ("url(" ++ floorplan.src ++ ")")
-            , "backgroundSize" => "100% auto"
-            , "backgroundRepeat" => "no-repeat"
+    div [ class "floorplan-map-wrapper" ]
+        [ svg
+            [ width "600"
+            , height "400"
+            , style
+                [ "background" => ("url(" ++ floorplan.src ++ ")")
+                , "backgroundSize" => "100% auto"
+                , "backgroundRepeat" => "no-repeat"
+                ]
             ]
+          <|
+            List.map plotLocation locations
         ]
-    <|
-        plotLocations locations
-
-
-plotLocations : List Location -> List (Html Msg)
-plotLocations locations =
-    locations
-        |> List.map plotLocation
 
 
 plotLocation : Location -> Html Msg
 plotLocation location =
     circle
-        [ cx (toString <| location.position_x * 600)
+        [ SvgAttr.class "location-point"
+        , cx (toString <| location.position_x * 600)
         , cy (toString <| location.position_y * 400)
         , r "8"
-        , fill "gray"
+        , fill "#72acdc"
         , fillOpacity "0.5"
         , onMouseEnter (ShowToolTip location Nothing)
         , onMouseLeave HideToolTip
@@ -266,17 +261,13 @@ viewToolTip toolTip =
     case toolTip of
         Showing location (Just pos) ->
             div
-                [ style
-                    [ "position" => "absolute"
-                    , "top" => px (pos.y + 10)
+                [ class "tooltip-wrapper"
+                , style
+                    [ "top" => px (pos.y + 10)
                     , "left" => px (pos.x + 10)
-                    , "backgroundColor" => "#fcf7ef"
-                    , "padding" => "8px"
-                    , "border" => "4px solid #1c476b"
-                    , "borderRadius" => "4px"
                     ]
                 ]
-                [ div [ style [ "font-family" => "monospace" ] ]
+                [ div []
                     [ p []
                         [ strong [] [ text "Name: " ]
                         , text location.name
@@ -307,10 +298,10 @@ px i =
 
 viewFilterLocations : Model -> Html Msg
 viewFilterLocations { filteredLocations, nameInput, typeSelect } =
-    div []
-        [ h1 [ style [ "marginTop" => "0" ] ] [ text "Locations" ]
+    div [ class "location-filter-wrapper" ]
+        [ h1 [ class "location-title" ] [ text "Locations" ]
         , filterForm nameInput typeSelect
-        , div [] <| locationInfoList filteredLocations
+        , div [ class "location-list" ] <| locationInfoList filteredLocations
         ]
 
 
@@ -318,12 +309,13 @@ filterForm : String -> String -> Html Msg
 filterForm nameInput typeSelected =
     div []
         [ input
-            [ placeholder "Filter by name"
+            [ class "form-name-input"
+            , placeholder "Filter by name"
             , value nameInput
             , onInput NameInputChange
             ]
             []
-        , select [ onChange TypeSelectChange ] <| optionList typeSelected
+        , select [ class "form-select-type", onChange TypeSelectChange ] <| optionList typeSelected
         , button [ onClick ResetFilterForm ] [ text "Reset filter" ]
         ]
 

@@ -9507,11 +9507,11 @@ var _user$project$Main$viewToolTip = function (toolTip) {
 			_elm_lang$html$Html$div,
 			{
 				ctor: '::',
-				_0: _elm_lang$html$Html_Attributes$style(
-					{
-						ctor: '::',
-						_0: A2(_user$project$Main_ops['=>'], 'position', 'absolute'),
-						_1: {
+				_0: _elm_lang$html$Html_Attributes$class('tooltip-wrapper'),
+				_1: {
+					ctor: '::',
+					_0: _elm_lang$html$Html_Attributes$style(
+						{
 							ctor: '::',
 							_0: A2(
 								_user$project$Main_ops['=>'],
@@ -9523,42 +9523,17 @@ var _user$project$Main$viewToolTip = function (toolTip) {
 									_user$project$Main_ops['=>'],
 									'left',
 									_user$project$Main$px(_p2.x + 10)),
-								_1: {
-									ctor: '::',
-									_0: A2(_user$project$Main_ops['=>'], 'backgroundColor', '#fcf7ef'),
-									_1: {
-										ctor: '::',
-										_0: A2(_user$project$Main_ops['=>'], 'padding', '8px'),
-										_1: {
-											ctor: '::',
-											_0: A2(_user$project$Main_ops['=>'], 'border', '4px solid #1c476b'),
-											_1: {
-												ctor: '::',
-												_0: A2(_user$project$Main_ops['=>'], 'borderRadius', '4px'),
-												_1: {ctor: '[]'}
-											}
-										}
-									}
-								}
+								_1: {ctor: '[]'}
 							}
-						}
-					}),
-				_1: {ctor: '[]'}
+						}),
+					_1: {ctor: '[]'}
+				}
 			},
 			{
 				ctor: '::',
 				_0: A2(
 					_elm_lang$html$Html$div,
-					{
-						ctor: '::',
-						_0: _elm_lang$html$Html_Attributes$style(
-							{
-								ctor: '::',
-								_0: A2(_user$project$Main_ops['=>'], 'font-family', 'monospace'),
-								_1: {ctor: '[]'}
-							}),
-						_1: {ctor: '[]'}
-					},
+					{ctor: '[]'},
 					{
 						ctor: '::',
 						_0: A2(
@@ -9883,29 +9858,33 @@ var _user$project$Main$plotLocation = function (location) {
 		_elm_lang$svg$Svg$circle,
 		{
 			ctor: '::',
-			_0: _elm_lang$svg$Svg_Attributes$cx(
-				_elm_lang$core$Basics$toString(location.position_x * 600)),
+			_0: _elm_lang$svg$Svg_Attributes$class('location-point'),
 			_1: {
 				ctor: '::',
-				_0: _elm_lang$svg$Svg_Attributes$cy(
-					_elm_lang$core$Basics$toString(location.position_y * 400)),
+				_0: _elm_lang$svg$Svg_Attributes$cx(
+					_elm_lang$core$Basics$toString(location.position_x * 600)),
 				_1: {
 					ctor: '::',
-					_0: _elm_lang$svg$Svg_Attributes$r('8'),
+					_0: _elm_lang$svg$Svg_Attributes$cy(
+						_elm_lang$core$Basics$toString(location.position_y * 400)),
 					_1: {
 						ctor: '::',
-						_0: _elm_lang$svg$Svg_Attributes$fill('gray'),
+						_0: _elm_lang$svg$Svg_Attributes$r('8'),
 						_1: {
 							ctor: '::',
-							_0: _elm_lang$svg$Svg_Attributes$fillOpacity('0.5'),
+							_0: _elm_lang$svg$Svg_Attributes$fill('#72acdc'),
 							_1: {
 								ctor: '::',
-								_0: _elm_lang$html$Html_Events$onMouseEnter(
-									A2(_user$project$Main$ShowToolTip, location, _elm_lang$core$Maybe$Nothing)),
+								_0: _elm_lang$svg$Svg_Attributes$fillOpacity('0.5'),
 								_1: {
 									ctor: '::',
-									_0: _elm_lang$html$Html_Events$onMouseLeave(_user$project$Main$HideToolTip),
-									_1: {ctor: '[]'}
+									_0: _elm_lang$html$Html_Events$onMouseEnter(
+										A2(_user$project$Main$ShowToolTip, location, _elm_lang$core$Maybe$Nothing)),
+									_1: {
+										ctor: '::',
+										_0: _elm_lang$html$Html_Events$onMouseLeave(_user$project$Main$HideToolTip),
+										_1: {ctor: '[]'}
+									}
 								}
 							}
 						}
@@ -9915,46 +9894,54 @@ var _user$project$Main$plotLocation = function (location) {
 		},
 		{ctor: '[]'});
 };
-var _user$project$Main$plotLocations = function (locations) {
-	return A2(_elm_lang$core$List$map, _user$project$Main$plotLocation, locations);
-};
 var _user$project$Main$svgMap = F2(
 	function (floorplan, locations) {
 		return A2(
-			_elm_lang$svg$Svg$svg,
+			_elm_lang$html$Html$div,
 			{
 				ctor: '::',
-				_0: _elm_lang$svg$Svg_Attributes$width('600'),
-				_1: {
-					ctor: '::',
-					_0: _elm_lang$svg$Svg_Attributes$height('400'),
-					_1: {
-						ctor: '::',
-						_0: _elm_lang$html$Html_Attributes$style(
-							{
-								ctor: '::',
-								_0: A2(
-									_user$project$Main_ops['=>'],
-									'background',
-									A2(
-										_elm_lang$core$Basics_ops['++'],
-										'url(',
-										A2(_elm_lang$core$Basics_ops['++'], floorplan.src, ')'))),
-								_1: {
-									ctor: '::',
-									_0: A2(_user$project$Main_ops['=>'], 'backgroundSize', '100% auto'),
-									_1: {
-										ctor: '::',
-										_0: A2(_user$project$Main_ops['=>'], 'backgroundRepeat', 'no-repeat'),
-										_1: {ctor: '[]'}
-									}
-								}
-							}),
-						_1: {ctor: '[]'}
-					}
-				}
+				_0: _elm_lang$html$Html_Attributes$class('floorplan-map-wrapper'),
+				_1: {ctor: '[]'}
 			},
-			_user$project$Main$plotLocations(locations));
+			{
+				ctor: '::',
+				_0: A2(
+					_elm_lang$svg$Svg$svg,
+					{
+						ctor: '::',
+						_0: _elm_lang$svg$Svg_Attributes$width('600'),
+						_1: {
+							ctor: '::',
+							_0: _elm_lang$svg$Svg_Attributes$height('400'),
+							_1: {
+								ctor: '::',
+								_0: _elm_lang$html$Html_Attributes$style(
+									{
+										ctor: '::',
+										_0: A2(
+											_user$project$Main_ops['=>'],
+											'background',
+											A2(
+												_elm_lang$core$Basics_ops['++'],
+												'url(',
+												A2(_elm_lang$core$Basics_ops['++'], floorplan.src, ')'))),
+										_1: {
+											ctor: '::',
+											_0: A2(_user$project$Main_ops['=>'], 'backgroundSize', '100% auto'),
+											_1: {
+												ctor: '::',
+												_0: A2(_user$project$Main_ops['=>'], 'backgroundRepeat', 'no-repeat'),
+												_1: {ctor: '[]'}
+											}
+										}
+									}),
+								_1: {ctor: '[]'}
+							}
+						}
+					},
+					A2(_elm_lang$core$List$map, _user$project$Main$plotLocation, locations)),
+				_1: {ctor: '[]'}
+			});
 	});
 var _user$project$Main$subscriptions = function (model) {
 	var _p10 = model.toolTip;
@@ -9993,14 +9980,18 @@ var _user$project$Main$filterForm = F2(
 					_elm_lang$html$Html$input,
 					{
 						ctor: '::',
-						_0: _elm_lang$html$Html_Attributes$placeholder('Filter by name'),
+						_0: _elm_lang$html$Html_Attributes$class('form-name-input'),
 						_1: {
 							ctor: '::',
-							_0: _elm_lang$html$Html_Attributes$value(nameInput),
+							_0: _elm_lang$html$Html_Attributes$placeholder('Filter by name'),
 							_1: {
 								ctor: '::',
-								_0: _elm_lang$html$Html_Events$onInput(_user$project$Main$NameInputChange),
-								_1: {ctor: '[]'}
+								_0: _elm_lang$html$Html_Attributes$value(nameInput),
+								_1: {
+									ctor: '::',
+									_0: _elm_lang$html$Html_Events$onInput(_user$project$Main$NameInputChange),
+									_1: {ctor: '[]'}
+								}
 							}
 						}
 					},
@@ -10011,8 +10002,12 @@ var _user$project$Main$filterForm = F2(
 						_elm_lang$html$Html$select,
 						{
 							ctor: '::',
-							_0: _user$project$Main$onChange(_user$project$Main$TypeSelectChange),
-							_1: {ctor: '[]'}
+							_0: _elm_lang$html$Html_Attributes$class('form-select-type'),
+							_1: {
+								ctor: '::',
+								_0: _user$project$Main$onChange(_user$project$Main$TypeSelectChange),
+								_1: {ctor: '[]'}
+							}
 						},
 						_user$project$Main$optionList(typeSelected)),
 					_1: {
@@ -10038,19 +10033,18 @@ var _user$project$Main$viewFilterLocations = function (_p11) {
 	var _p12 = _p11;
 	return A2(
 		_elm_lang$html$Html$div,
-		{ctor: '[]'},
+		{
+			ctor: '::',
+			_0: _elm_lang$html$Html_Attributes$class('location-filter-wrapper'),
+			_1: {ctor: '[]'}
+		},
 		{
 			ctor: '::',
 			_0: A2(
 				_elm_lang$html$Html$h1,
 				{
 					ctor: '::',
-					_0: _elm_lang$html$Html_Attributes$style(
-						{
-							ctor: '::',
-							_0: A2(_user$project$Main_ops['=>'], 'marginTop', '0'),
-							_1: {ctor: '[]'}
-						}),
+					_0: _elm_lang$html$Html_Attributes$class('location-title'),
 					_1: {ctor: '[]'}
 				},
 				{
@@ -10065,7 +10059,11 @@ var _user$project$Main$viewFilterLocations = function (_p11) {
 					ctor: '::',
 					_0: A2(
 						_elm_lang$html$Html$div,
-						{ctor: '[]'},
+						{
+							ctor: '::',
+							_0: _elm_lang$html$Html_Attributes$class('location-list'),
+							_1: {ctor: '[]'}
+						},
 						_user$project$Main$locationInfoList(_p12.filteredLocations)),
 					_1: {ctor: '[]'}
 				}
@@ -10082,20 +10080,7 @@ var _user$project$Main$view = function (model) {
 				_elm_lang$html$Html$h1,
 				{
 					ctor: '::',
-					_0: _elm_lang$html$Html_Attributes$style(
-						{
-							ctor: '::',
-							_0: A2(_user$project$Main_ops['=>'], 'textAlign', 'center'),
-							_1: {
-								ctor: '::',
-								_0: A2(_user$project$Main_ops['=>'], 'color', '#1c476b'),
-								_1: {
-									ctor: '::',
-									_0: A2(_user$project$Main_ops['=>'], 'fontSize', '48px'),
-									_1: {ctor: '[]'}
-								}
-							}
-						}),
+					_0: _elm_lang$html$Html_Attributes$class('floorplan-name'),
 					_1: {ctor: '[]'}
 				},
 				{
@@ -10109,28 +10094,15 @@ var _user$project$Main$view = function (model) {
 					_elm_lang$html$Html$div,
 					{
 						ctor: '::',
-						_0: _elm_lang$html$Html_Attributes$style(
-							{
-								ctor: '::',
-								_0: A2(_user$project$Main_ops['=>'], 'display', 'flex'),
-								_1: {
-									ctor: '::',
-									_0: A2(_user$project$Main_ops['=>'], 'justify-content', 'space-around'),
-									_1: {
-										ctor: '::',
-										_0: A2(_user$project$Main_ops['=>'], 'align-items', 'flex-start'),
-										_1: {ctor: '[]'}
-									}
-								}
-							}),
+						_0: _elm_lang$html$Html_Attributes$class('floorplan-main-content'),
 						_1: {ctor: '[]'}
 					},
 					{
 						ctor: '::',
-						_0: A2(_user$project$Main$svgMap, model.floorplan, model.filteredLocations),
+						_0: _user$project$Main$viewFilterLocations(model),
 						_1: {
 							ctor: '::',
-							_0: _user$project$Main$viewFilterLocations(model),
+							_0: A2(_user$project$Main$svgMap, model.floorplan, model.filteredLocations),
 							_1: {ctor: '[]'}
 						}
 					}),
