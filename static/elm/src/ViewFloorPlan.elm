@@ -225,6 +225,7 @@ updateFilter filterMsg filter model =
 -- VIEW
 
 
+(=>) : a -> b -> ( a, b )
 (=>) =
     (,)
 
