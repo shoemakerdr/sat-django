@@ -10,10 +10,11 @@ class LocationSerializer(serializers.ModelSerializer):
 
 class FloorPlanSerializer(serializers.ModelSerializer):
     locations = LocationSerializer(many=True, read_only=True)
+    image = serializers.ImageField(required=False)
 
     class Meta:
         model = FloorPlan
-        fields = ('id', 'user', 'name', 'image', 'width_ratio', 'height_ratio', 'locations', 'last_updated')
+        fields = ('id', 'user', 'name', 'image', 'aspect_ratio', 'locations', 'last_updated')
 
 
 class UserSerializer(serializers.ModelSerializer):
