@@ -20,8 +20,8 @@ class FloorPlan(models.Model):
     name = models.CharField(max_length=100)
     user = models.ForeignKey(User, related_name='floorplans', on_delete=models.CASCADE)
     image = models.ImageField(upload_to='floorplans')
-    width_ratio = models.FloatField(default=1.0)
-    height_ratio = models.FloatField()
+    # Our aspect ratio here is width:height where width is always 1.0.
+    aspect_ratio = models.FloatField(default=1.0) 
     created_at = models.DateTimeField(auto_now_add=True)
     last_updated = models.DateTimeField(auto_now=True)
 
