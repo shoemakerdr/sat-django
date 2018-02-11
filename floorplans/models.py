@@ -22,6 +22,7 @@ class FloorPlan(models.Model):
     image = models.ImageField(upload_to='floorplans')
     # Our aspect ratio here is width:height where width is always 1.0.
     aspect_ratio = models.FloatField(default=1.0) 
+    is_trashed = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     last_updated = models.DateTimeField(auto_now=True)
 
@@ -37,6 +38,7 @@ class Location(models.Model):
     floorplan = models.ForeignKey(FloorPlan, related_name='locations', on_delete=models.CASCADE)
     position_x = models.FloatField()
     position_y = models.FloatField()
+    is_trashed = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     last_updated = models.DateTimeField(auto_now=True)
 
