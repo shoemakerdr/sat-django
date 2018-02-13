@@ -1,6 +1,5 @@
 from rest_framework import serializers
 from floorplans.models import User, FloorPlan, Location
-from django.contrib.auth.models import User
 
 
 class LocationsByFloorPlanListSerializer(serializers.ListSerializer):
@@ -47,7 +46,6 @@ class LocationListSerializer(serializers.ListSerializer):
 
 
 class LocationSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = Location
         list_serializer_class = LocationListSerializer
@@ -82,12 +80,4 @@ class FloorPlanSerializer(serializers.ModelSerializer):
             'is_public',
             'last_updated'
         )
-
-
-class UserSerializer(serializers.ModelSerializer):
-    floorplans = FloorPlanSerializer(many=True, read_only=True)
-
-    class Meta:
-        model = User
-        fields = ('id', 'username', 'floorplans')
 

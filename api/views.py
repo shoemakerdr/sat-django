@@ -4,23 +4,10 @@ from rest_framework import generics, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
-class FloorPlanList(generics.ListCreateAPIView):
+
+class FloorPlanDetail(generics.RetrieveUpdateAPIView):
     queryset = FloorPlan.objects.all()
     serializer_class = FloorPlanSerializer
-
-
-class FloorPlanDetail(generics.RetrieveUpdateDestroyAPIView):
-    queryset = FloorPlan.objects.all()
-    serializer_class = FloorPlanSerializer
-
-
-class LocationList(generics.ListCreateAPIView):
-    serializer_class = LocationSerializer
-
-    def get_queryset(self):
-        user = self.request.user
-        floorplans = user.floorplans.all()
-        return Location.objects.filter(floorplan__in=floorplans)
 
 
 class LocationsByFloorPlan(APIView):
@@ -58,7 +45,7 @@ class LocationsByFloorPlan(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def put(self, request, pk, format=None):
-        # /api/locations/floorplan/2/?trash=true
+        # /api/floorplans/2/locations/?trash=true
         if request.query_params['trash']:
             data = [self.specify_trashed(item) for item in request.data]
         else:
@@ -70,7 +57,3 @@ class LocationsByFloorPlan(APIView):
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
-class LocationDetail(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Location.objects.all()
-    serializer_class = LocationSerializer
