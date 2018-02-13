@@ -73,12 +73,13 @@ class FloorPlanSerializer(serializers.ModelSerializer):
         model = FloorPlan
         fields = (
             'id', 
-            'user', 
+            'owner', 
             'name', 
             'image', 
             'aspect_ratio', 
             'locations', 
             'is_trashed',
+            'is_public',
             'last_updated'
         )
 
