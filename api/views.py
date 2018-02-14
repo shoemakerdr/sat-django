@@ -6,13 +6,23 @@ from rest_framework.response import Response
 
 
 class FloorPlanDetail(generics.RetrieveUpdateAPIView):
+    """
+    name : 'api-floorplan'
+    GET : FloorPlan instance, includes list of Locations related to the FloorPlan
+    PUT : Update FloorPlan instance, cannot update Locations from this route
+    """
     queryset = FloorPlan.objects.all()
     serializer_class = FloorPlanSerializer
 
 
 class LocationsByFloorPlan(APIView):
-    serializer_class = LocationsByFloorPlanSerializer
-
+    """
+    name : 'api-locations'
+    GET : List of Location instances related to FloorPlan
+    POST : Create a list of Locations (must be in list)
+    PUT : Update a list of Location instances
+        --> ?trash=true query : will trash all Locations passed in
+    """
     def get_queryset(self, pk):
         floorplan = self.get_floorplan(pk)
         return Location.objects.filter(floorplan=floorplan, is_trashed=False)
@@ -46,7 +56,8 @@ class LocationsByFloorPlan(APIView):
 
     def put(self, request, pk, format=None):
         # /api/floorplans/2/locations/?trash=true
-        if request.query_params['trash']:
+        trash = request.query_params.get('trash', None)
+        if trash is not None:
             data = [self.specify_trashed(item) for item in request.data]
         else:
             data = request.data
