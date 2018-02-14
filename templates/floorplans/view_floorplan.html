@@ -6,12 +6,14 @@
 {% endblock %}
 
 {% block content %}
-
+{% csrf_token %}
 <link href='{% static "css/floorplans/view_floorplan.css" %}' rel='stylesheet'>
 <div id='main'></div>
 <script type='text/javascript' src='{% static "js/view_floorplan.js" %}'></script>
 <script type='text/javascript'>
-  Elm.Main.fullscreen()
+  var container = document.getElementById('main')
+  var token = document.querySelectorAll('[name=csrfmiddlewaretoken]')[0].value
+  Elm.Main.embed(container)
 </script>
 
 {% endblock %}
