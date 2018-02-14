@@ -9867,9 +9867,12 @@ var _user$project$Main$optionList = function (typeSelected) {
 			},
 			options));
 };
-var _user$project$Main$Model = F8(
-	function (a, b, c, d, e, f, g, h) {
-		return {floorplan: a, locations: b, nameInput: c, typeSelect: d, toolTip: e, filteredLocations: f, filters: g, floorplanDimensions: h};
+var _user$project$Main$Flags = function (a) {
+	return {token: a};
+};
+var _user$project$Main$Model = F9(
+	function (a, b, c, d, e, f, g, h, i) {
+		return {floorplan: a, locations: b, nameInput: c, typeSelect: d, toolTip: e, filteredLocations: f, filters: g, floorplanDimensions: h, token: i};
 	});
 var _user$project$Main$Dimensions = F2(
 	function (a, b) {
@@ -9980,23 +9983,26 @@ var _user$project$Main$update = F2(
 var _user$project$Main$ResizeFloorplan = function (a) {
 	return {ctor: 'ResizeFloorplan', _0: a};
 };
-var _user$project$Main$init = A2(
-	_elm_lang$core$Platform_Cmd_ops['!'],
-	{
-		floorplan: _user$project$FloorPlanTypes$floorplanSample,
-		locations: _user$project$FloorPlanTypes$locationListSample,
-		nameInput: '',
-		typeSelect: _user$project$Main$defaultSelect,
-		toolTip: _user$project$Main$Hidden,
-		filteredLocations: _user$project$FloorPlanTypes$locationListSample,
-		filters: {ctor: '[]'},
-		floorplanDimensions: _elm_lang$core$Maybe$Nothing
-	},
-	{
-		ctor: '::',
-		_0: A2(_elm_lang$core$Task$perform, _user$project$Main$ResizeFloorplan, _elm_lang$window$Window$size),
-		_1: {ctor: '[]'}
-	});
+var _user$project$Main$init = function (flags) {
+	return A2(
+		_elm_lang$core$Platform_Cmd_ops['!'],
+		{
+			floorplan: _user$project$FloorPlanTypes$floorplanSample,
+			locations: _user$project$FloorPlanTypes$locationListSample,
+			nameInput: '',
+			typeSelect: _user$project$Main$defaultSelect,
+			toolTip: _user$project$Main$Hidden,
+			filteredLocations: _user$project$FloorPlanTypes$locationListSample,
+			filters: {ctor: '[]'},
+			floorplanDimensions: _elm_lang$core$Maybe$Nothing,
+			token: A2(_elm_lang$core$Debug$log, 'token', flags.token)
+		},
+		{
+			ctor: '::',
+			_0: A2(_elm_lang$core$Task$perform, _user$project$Main$ResizeFloorplan, _elm_lang$window$Window$size),
+			_1: {ctor: '[]'}
+		});
+};
 var _user$project$Main$HideToolTip = {ctor: 'HideToolTip'};
 var _user$project$Main$ShowToolTip = F2(
 	function (a, b) {
@@ -10280,8 +10286,15 @@ var _user$project$Main$view = function (model) {
 			}
 		});
 };
-var _user$project$Main$main = _elm_lang$html$Html$program(
-	{init: _user$project$Main$init, view: _user$project$Main$view, update: _user$project$Main$update, subscriptions: _user$project$Main$subscriptions})();
+var _user$project$Main$main = _elm_lang$html$Html$programWithFlags(
+	{init: _user$project$Main$init, view: _user$project$Main$view, update: _user$project$Main$update, subscriptions: _user$project$Main$subscriptions})(
+	A2(
+		_elm_lang$core$Json_Decode$andThen,
+		function (token) {
+			return _elm_lang$core$Json_Decode$succeed(
+				{token: token});
+		},
+		A2(_elm_lang$core$Json_Decode$field, 'token', _elm_lang$core$Json_Decode$string)));
 
 var Elm = {};
 Elm['Main'] = Elm['Main'] || {};

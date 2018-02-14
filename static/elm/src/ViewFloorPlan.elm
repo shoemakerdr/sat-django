@@ -53,9 +53,9 @@ import FloorPlanTypes exposing (..)
 import Filter exposing (Filter(..))
 
 
-main : Program Never Model Msg
+main : Program Flags Model Msg
 main =
-    Html.program
+    Html.programWithFlags
         { init = init
         , view = view
         , update = update
@@ -68,8 +68,13 @@ defaultSelect =
     "-- Select type --"
 
 
-init : ( Model, Cmd Msg )
-init =
+type alias Flags =
+    { token : String
+    }
+
+
+init : Flags -> ( Model, Cmd Msg )
+init flags =
     { floorplan = floorplanSample
     , locations = locationListSample
     , nameInput = ""
@@ -78,6 +83,7 @@ init =
     , filteredLocations = locationListSample
     , filters = []
     , floorplanDimensions = Nothing
+    , token = Debug.log "token" flags.token
     }
         ! [ Task.perform ResizeFloorplan Window.size ]
 
@@ -95,6 +101,7 @@ type alias Model =
     , filteredLocations : List Location
     , filters : List (Filter FilterType Location)
     , floorplanDimensions : Maybe Dimensions
+    , token : String
     }
 
 

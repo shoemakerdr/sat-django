@@ -13,7 +13,7 @@
 <script type='text/javascript'>
   var container = document.getElementById('main')
   var token = document.querySelectorAll('[name=csrfmiddlewaretoken]')[0].value
-  Elm.Main.embed(container)
+  Elm.Main.embed(container, { token: token })
 </script>
 
 {% endblock %}

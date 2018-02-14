@@ -25,12 +25,15 @@
     </nav>
     <div class='container'>
 
+<input type="hidden" name="csrfmiddlewaretoken" value="XYs1clGqqMbOlISWlffaRyKxNDFv29xAE0Y3ScFcrNGyCULWgvQskb1Ha6NdxUpX">
 
 <div id='main'></div>
 <!-- <script type='text/javascript' src='/static/js/view_floorplan.js'></script> -->
 <script type='text/javascript' src='elm.js'></script>
 <script type='text/javascript'>
-  Elm.Main.embed(document.getElementById("main"))
+  var container = document.getElementById('main')
+  var token = document.querySelectorAll('[name=csrfmiddlewaretoken]')[0].value
+  Elm.Main.embed(container, { token: token })
 </script>
 
 
