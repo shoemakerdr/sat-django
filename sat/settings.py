@@ -135,3 +135,10 @@ LOGIN_URL = 'floorplans_login'
 MEDIA_ROOT = os.path.abspath('sat/media')
 
 MEDIA_URL = '/media/'
+
+
+#  REST_FRAMEWORK = {
+    #  'DEFAULT_PERMISSION_CLASSES': (
+        #  'rest_framework.permissions.IsAuthenticated',
+    #  )
+#  }
