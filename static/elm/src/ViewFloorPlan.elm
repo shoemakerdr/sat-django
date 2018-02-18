@@ -70,20 +70,45 @@ defaultSelect =
 
 type alias Flags =
     { token : String
+    , user : String
+    , floorplan :
+        { id : Int
+        , aspect_ratio : Float
+        , image : String
+        , is_public : Bool
+        , is_trashed : Bool
+        , name : String
+        , owner : Int
+        , locations :
+            List
+                { id : Int
+                , floorplan : Int
+                , name : String
+                , loc_type : String
+                , details : String
+                , extension : Maybe Int
+                , is_trashed : Bool
+                , position_x : Float
+                , position_y : Float
+                , last_updated : String
+                }
+        , last_updated : String
+        }
     }
 
 
 init : Flags -> ( Model, Cmd Msg )
 init flags =
-    { floorplan = floorplanSample
-    , locations = locationListSample
+    { floorplan = newFloorPlan flags.floorplan
+    , locations = flags.floorplan.locations
     , nameInput = ""
     , typeSelect = defaultSelect
     , toolTip = Hidden
-    , filteredLocations = locationListSample
+    , filteredLocations = flags.floorplan.locations
     , filters = []
     , floorplanDimensions = Nothing
     , token = Debug.log "token" flags.token
+    , user = Debug.log "user" flags.user
     }
         ! [ Task.perform ResizeFloorplan Window.size ]
 
@@ -102,6 +127,7 @@ type alias Model =
     , filters : List (Filter FilterType Location)
     , floorplanDimensions : Maybe Dimensions
     , token : String
+    , user : String
     }
 
 
@@ -195,7 +221,7 @@ getFloorplanDimensions size floorplan =
             0.7 * (toFloat size.width)
     in
         { width = width
-        , height = width * floorplan.heightRatio
+        , height = width * floorplan.aspect_ratio
         }
 
 
@@ -206,7 +232,7 @@ filterByName name location =
 
 filterByType : String -> Location -> Bool
 filterByType locationType location =
-    locationType == location.locationType
+    locationType == location.loc_type
 
 
 updateFilter : FilterMsg -> Filter FilterType Location -> Model -> ( Model, Cmd Msg )
@@ -269,7 +295,7 @@ svgMap floorplan dimensions locations =
                     [ width <| toString dims.width
                     , height <| toString dims.height
                     , style
-                        [ "background" => ("url(" ++ floorplan.src ++ ")")
+                        [ "background" => ("url(" ++ "http://localhost:8000" ++ floorplan.image ++ ")")
                         , "backgroundSize" => "100% auto"
                         , "backgroundRepeat" => "no-repeat"
                         ]
@@ -316,7 +342,7 @@ viewToolTip toolTip =
                         ]
                     , p []
                         [ strong [] [ text "Ext: " ]
-                        , text location.extension
+                        , text <| toString location.extension
                         ]
                     , p []
                         [ strong [] [ text "Details: " ]
@@ -324,7 +350,7 @@ viewToolTip toolTip =
                         ]
                     , p []
                         [ strong [] [ text "Type: " ]
-                        , text location.locationType
+                        , text location.loc_type
                         ]
                     ]
                 ]
@@ -401,7 +427,7 @@ locationInfoList locations =
     locations
         |> List.map
             (\location ->
-                p [] [ text <| location.name ++ " - " ++ location.locationType ]
+                p [] [ text <| location.name ++ " - " ++ location.loc_type ]
             )
 
 

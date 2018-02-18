@@ -2,59 +2,48 @@ module FloorPlanTypes
     exposing
         ( FloorPlan
         , Location
-        , floorplanSample
-        , locationListSample
+        , newFloorPlan
         )
 
 
 type alias FloorPlan =
     { id : Int
+    , aspect_ratio : Float
+    , image : String
+    , is_public : Bool
+    , is_trashed : Bool
     , name : String
-    , src : String
-    , widthRatio : Float
-    , heightRatio : Float
+    , owner : Int
+    , last_updated : String
     }
 
 
 type alias Location =
     { id : Int
+    , floorplan : Int
     , name : String
-    , locationType : String
+    , loc_type : String
     , details : String
-    , extension : String
+    , extension : Maybe Int
+    , is_trashed : Bool
     , position_x : Float
     , position_y : Float
-    , last_updated : Int
+    , last_updated : String
     }
 
 
-floorplanSample : FloorPlan
-floorplanSample =
-    { id = 1
-    , name = "My House"
-    , src = "src/floor-plan.jpg"
-    , widthRatio = 1.0
-    , heightRatio = 0.6667
+type alias Flag a =
+    { a | locations : List Location }
+
+
+newFloorPlan : Flag FloorPlan -> FloorPlan
+newFloorPlan flag =
+    { id = flag.id
+    , aspect_ratio = flag.aspect_ratio
+    , image = flag.image
+    , is_public = flag.is_public
+    , is_trashed = flag.is_trashed
+    , name = flag.name
+    , owner = flag.owner
+    , last_updated = flag.last_updated
     }
-
-
-newLocation : Int -> String -> String -> Float -> Float -> Location
-newLocation id name locationType x y =
-    { id = id
-    , name = name
-    , locationType = locationType
-    , details = "Some details"
-    , extension = "8000"
-    , position_x = x
-    , position_y = y
-    , last_updated = 1517108599541
-    }
-
-
-locationListSample : List Location
-locationListSample =
-    [ newLocation 1 "bedroom" "Private Area" 0.175 0.2
-    , newLocation 2 "bathroom" "Restroom" 0.4066666666666667 0.165
-    , newLocation 3 "kitchen" "Common Area" 0.568333333333333 0.1325
-    , newLocation 4 "living room" "Common Area" 0.68166 0.4275
-    ]

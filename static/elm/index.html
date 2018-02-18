@@ -26,14 +26,18 @@
     <div class='container'>
 
 <input type="hidden" name="csrfmiddlewaretoken" value="XYs1clGqqMbOlISWlffaRyKxNDFv29xAE0Y3ScFcrNGyCULWgvQskb1Ha6NdxUpX">
+<input type='hidden' name='username' value='shoemakerdr'>
+<input type='hidden' name='floorplan' value='{&quot;id&quot;: 1, &quot;owner&quot;: 1, &quot;name&quot;: &quot;House Sample&quot;, &quot;image&quot;: &quot;/media/floorplans/floor-plan.jpg&quot;, &quot;aspect_ratio&quot;: 0.66667, &quot;locations&quot;: [{&quot;id&quot;: 1, &quot;name&quot;: &quot;bedroom&quot;, &quot;floorplan&quot;: 1, &quot;loc_type&quot;: &quot;PRIVATE&quot;, &quot;details&quot;: &quot;&quot;, &quot;extension&quot;: null, &quot;position_x&quot;: 0.175, &quot;position_y&quot;: 0.2, &quot;is_trashed&quot;: false, &quot;last_updated&quot;: &quot;2018-02-09T19:50:51.621658Z&quot;}, {&quot;id&quot;: 2, &quot;name&quot;: &quot;living room&quot;, &quot;floorplan&quot;: 1, &quot;loc_type&quot;: &quot;COMMON&quot;, &quot;details&quot;: &quot;&quot;, &quot;extension&quot;: null, &quot;position_x&quot;: 0.68166, &quot;position_y&quot;: 0.4275, &quot;is_trashed&quot;: false, &quot;last_updated&quot;: &quot;2018-01-28T00:37:26.880522Z&quot;}, {&quot;id&quot;: 3, &quot;name&quot;: &quot;kitchen&quot;, &quot;floorplan&quot;: 1, &quot;loc_type&quot;: &quot;COMMON&quot;, &quot;details&quot;: &quot;&quot;, &quot;extension&quot;: null, &quot;position_x&quot;: 0.5683333333333334, &quot;position_y&quot;: 0.1325, &quot;is_trashed&quot;: false, &quot;last_updated&quot;: &quot;2018-01-28T00:38:04.182319Z&quot;}, {&quot;id&quot;: 4, &quot;name&quot;: &quot;bathroom&quot;, &quot;floorplan&quot;: 1, &quot;loc_type&quot;: &quot;RESTROOM&quot;, &quot;details&quot;: &quot;&quot;, &quot;extension&quot;: null, &quot;position_x&quot;: 0.4066666666666667, &quot;position_y&quot;: 0.165, &quot;is_trashed&quot;: false, &quot;last_updated&quot;: &quot;2018-01-28T00:38:45.480560Z&quot;}], &quot;is_trashed&quot;: false, &quot;is_public&quot;: false, &quot;last_updated&quot;: &quot;2018-02-08T19:59:37.927343Z&quot;}'>
 
 <div id='main'></div>
 <!-- <script type='text/javascript' src='/static/js/view_floorplan.js'></script> -->
 <script type='text/javascript' src='elm.js'></script>
 <script type='text/javascript'>
   var container = document.getElementById('main')
+  var user= document.querySelectorAll('[name=username]')[0].value
+  var floorplan= document.querySelectorAll('[name=floorplan]')[0].value
   var token = document.querySelectorAll('[name=csrfmiddlewaretoken]')[0].value
-  Elm.Main.embed(container, { token: token })
+  Elm.Main.embed(container, { token: token, user: user, floorplan: JSON.parse( floorplan ) })
 </script>
 
 
