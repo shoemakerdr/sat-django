@@ -7,13 +7,18 @@
 
 {% block content %}
 {% csrf_token %}
+<input type='hidden' name='username' value='{{user}}'>
+<input type='hidden' name='floorplan' value='{{floorplan}}'>
 <link href='{% static "css/floorplans/view_floorplan.css" %}' rel='stylesheet'>
 <div id='main'></div>
-<script type='text/javascript' src='{% static "js/view_floorplan.js" %}'></script>
+<script type='text/javascript' src='{% static "js/elm.js" %}'></script>
 <script type='text/javascript'>
   var container = document.getElementById('main')
+  var user= document.querySelectorAll('[name=username]')[0].value
+  var floorplan= document.querySelectorAll('[name=floorplan]')[0].value
   var token = document.querySelectorAll('[name=csrfmiddlewaretoken]')[0].value
-  Elm.Main.embed(container, { token: token })
+  Elm.Main.embed(container, { token: token, user: user, floorplan: JSON.parse( floorplan ) })
+  // Elm.Main.embed(container)
 </script>
 
 {% endblock %}
