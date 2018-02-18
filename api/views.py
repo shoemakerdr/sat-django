@@ -1,6 +1,8 @@
 from floorplans.models import FloorPlan, Location
 from .serializers import FloorPlanSerializer, LocationSerializer, LocationsByFloorPlanSerializer
 from rest_framework import generics, status
+from rest_framework.permissions import IsAuthenticated
+from .permissions import IsOwnerOrFloorPlanIsPublic
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
@@ -13,6 +15,7 @@ class FloorPlanDetail(generics.RetrieveUpdateAPIView):
     """
     queryset = FloorPlan.objects.all()
     serializer_class = FloorPlanSerializer
+    permission_classes = (IsOwnerOrFloorPlanIsPublic,)
 
 
 class LocationsByFloorPlan(APIView):
@@ -23,6 +26,9 @@ class LocationsByFloorPlan(APIView):
     PUT : Update a list of Location instances
         --> ?trash=true query : will trash all Locations passed in
     """
+
+    permission_classes = (IsAuthenticated,)
+
     def get_queryset(self, pk):
         floorplan = self.get_floorplan(pk)
         return Location.objects.filter(floorplan=floorplan, is_trashed=False)
