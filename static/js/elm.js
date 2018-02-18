@@ -10012,8 +10012,8 @@ var _user$project$Main$init = function (flags) {
 			filteredLocations: flags.floorplan.locations,
 			filters: {ctor: '[]'},
 			floorplanDimensions: _elm_lang$core$Maybe$Nothing,
-			token: A2(_elm_lang$core$Debug$log, 'token', flags.token),
-			user: A2(_elm_lang$core$Debug$log, 'user', flags.user)
+			token: flags.token,
+			user: flags.user
 		},
 		{
 			ctor: '::',

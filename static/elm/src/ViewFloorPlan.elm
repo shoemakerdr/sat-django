@@ -107,8 +107,8 @@ init flags =
     , filteredLocations = flags.floorplan.locations
     , filters = []
     , floorplanDimensions = Nothing
-    , token = Debug.log "token" flags.token
-    , user = Debug.log "user" flags.user
+    , token = flags.token
+    , user = flags.user
     }
         ! [ Task.perform ResizeFloorplan Window.size ]
 
