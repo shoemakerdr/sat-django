@@ -66,6 +66,11 @@ class LocationSerializer(serializers.ModelSerializer):
 class FloorPlanSerializer(serializers.ModelSerializer):
     locations = LocationSerializer(many=True, read_only=True)
     image = serializers.ImageField(required=False)
+    aspect_ratio = serializers.SerializerMethodField()
+
+    def get_aspect_ratio(self, obj):
+        fp = FloorPlan.objects.get(pk=obj.id)
+        return fp.aspect_ratio()
 
     class Meta:
         model = FloorPlan
