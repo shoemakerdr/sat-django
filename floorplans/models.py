@@ -19,9 +19,9 @@ LOCATION_TYPES = (
 class FloorPlan(models.Model):
     name = models.CharField(max_length=100)
     owner = models.ForeignKey(User, related_name='floorplans', on_delete=models.CASCADE)
-    image = models.ImageField(upload_to='floorplans')
-    # Our aspect ratio here is width:height where width is always 1.0.
-    aspect_ratio = models.FloatField(default=1.0) 
+    width = models.FloatField(default=1.0)
+    height = models.FloatField(default=1.0)
+    image = models.ImageField(upload_to='floorplans', width_field='width', height_field='height')
     is_trashed = models.BooleanField(default=False)
     is_public = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -29,6 +29,9 @@ class FloorPlan(models.Model):
 
     def __str__(self):
         return self.name
+
+    def aspect_ratio(self):
+        return self.height / self.width
 
 
 class Location(models.Model):
