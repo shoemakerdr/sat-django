@@ -20,6 +20,7 @@ type alias FloorPlan =
     , is_trashed : Bool
     , name : String
     , owner : Int
+    , owner_name : String
     , last_updated : String
     }
 
@@ -51,6 +52,7 @@ newFloorPlan flag =
     , is_trashed = flag.is_trashed
     , name = flag.name
     , owner = flag.owner
+    , owner_name = flag.owner_name
     , last_updated = flag.last_updated
     }
 

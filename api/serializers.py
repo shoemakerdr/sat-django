@@ -67,16 +67,21 @@ class FloorPlanSerializer(serializers.ModelSerializer):
     locations = LocationSerializer(many=True, read_only=True)
     image = serializers.ImageField(required=False)
     aspect_ratio = serializers.SerializerMethodField()
+    owner_name = serializers.SerializerMethodField()
 
     def get_aspect_ratio(self, obj):
         fp = FloorPlan.objects.get(pk=obj.id)
         return fp.aspect_ratio()
+
+    def get_owner_name(self, obj):
+        return User.objects.get(pk=obj.owner.id).username
 
     class Meta:
         model = FloorPlan
         fields = (
             'id', 
             'owner', 
+            'owner_name',
             'name', 
             'image', 
             'aspect_ratio', 
