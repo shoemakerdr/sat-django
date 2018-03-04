@@ -350,7 +350,13 @@ viewToolTip toolTip =
                             ]
                         , p []
                             [ strong [] [ text "Ext: " ]
-                            , text <| toString location.extension
+                            , text <|
+                                case location.extension of
+                                    Nothing ->
+                                        ""
+
+                                    Just x ->
+                                        toString x
                             ]
                         , p []
                             [ strong [] [ text "Details: " ]
