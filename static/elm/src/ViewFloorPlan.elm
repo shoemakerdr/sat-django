@@ -232,7 +232,11 @@ filterByName name location =
 
 filterByType : String -> Location -> Bool
 filterByType locationType location =
-    locationType == location.loc_type
+    let
+        locType =
+            getLocationFromReadable locationType
+    in
+        locType == location.loc_type
 
 
 updateFilter : FilterMsg -> Filter FilterType Location -> Model -> ( Model, Cmd Msg )
@@ -328,32 +332,36 @@ viewToolTip : ToolTip -> Html Msg
 viewToolTip toolTip =
     case toolTip of
         Showing location (Just pos) ->
-            div
-                [ class "tooltip-wrapper"
-                , style
-                    [ "top" => px (pos.y + 10)
-                    , "left" => px (pos.x + 10)
-                    ]
-                ]
-                [ div []
-                    [ p []
-                        [ strong [] [ text "Name: " ]
-                        , text location.name
-                        ]
-                    , p []
-                        [ strong [] [ text "Ext: " ]
-                        , text <| toString location.extension
-                        ]
-                    , p []
-                        [ strong [] [ text "Details: " ]
-                        , text location.details
-                        ]
-                    , p []
-                        [ strong [] [ text "Type: " ]
-                        , text location.loc_type
+            let
+                locationType =
+                    getLocationFromAbbr location.loc_type
+            in
+                div
+                    [ class "tooltip-wrapper"
+                    , style
+                        [ "top" => px (pos.y + 10)
+                        , "left" => px (pos.x + 10)
                         ]
                     ]
-                ]
+                    [ div []
+                        [ p []
+                            [ strong [] [ text "Name: " ]
+                            , text location.name
+                            ]
+                        , p []
+                            [ strong [] [ text "Ext: " ]
+                            , text <| toString location.extension
+                            ]
+                        , p []
+                            [ strong [] [ text "Details: " ]
+                            , text location.details
+                            ]
+                        , p []
+                            [ strong [] [ text "Type: " ]
+                            , text locationType
+                            ]
+                        ]
+                    ]
 
         _ ->
             div [] []
@@ -427,7 +435,11 @@ locationInfoList locations =
     locations
         |> List.map
             (\location ->
-                p [] [ text <| location.name ++ " - " ++ location.loc_type ]
+                let
+                    locationType =
+                        getLocationFromAbbr location.loc_type
+                in
+                    p [] [ text <| location.name ++ " - " ++ locationType ]
             )
 
 
