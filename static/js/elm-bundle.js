@@ -9549,6 +9549,85 @@ var _user$project$Filter$Filter = F2(
 		return {ctor: 'Filter', _0: a, _1: b};
 	});
 
+var _user$project$FloorPlanTypes$getLocation = F2(
+	function (loc, locDict) {
+		var l = A2(_elm_lang$core$Dict$get, loc, locDict);
+		return A2(_elm_lang$core$Maybe$withDefault, '', l);
+	});
+var _user$project$FloorPlanTypes$locMapReadableToAbbr = _elm_lang$core$Dict$fromList(
+	{
+		ctor: '::',
+		_0: {ctor: '_Tuple2', _0: 'Desk', _1: 'DESK'},
+		_1: {
+			ctor: '::',
+			_0: {ctor: '_Tuple2', _0: 'Office', _1: 'OFFICE'},
+			_1: {
+				ctor: '::',
+				_0: {ctor: '_Tuple2', _0: 'Conference Room', _1: 'CONFR'},
+				_1: {
+					ctor: '::',
+					_0: {ctor: '_Tuple2', _0: 'Common Area', _1: 'COMMON'},
+					_1: {
+						ctor: '::',
+						_0: {ctor: '_Tuple2', _0: 'Restroom', _1: 'RESTROOM'},
+						_1: {
+							ctor: '::',
+							_0: {ctor: '_Tuple2', _0: 'Public Area', _1: 'PUBLIC'},
+							_1: {
+								ctor: '::',
+								_0: {ctor: '_Tuple2', _0: 'Private Area', _1: 'PRIVATE'},
+								_1: {
+									ctor: '::',
+									_0: {ctor: '_Tuple2', _0: 'Miscellaneous', _1: 'MISC'},
+									_1: {ctor: '[]'}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	});
+var _user$project$FloorPlanTypes$getLocationFromReadable = function (loc) {
+	return A2(_user$project$FloorPlanTypes$getLocation, loc, _user$project$FloorPlanTypes$locMapReadableToAbbr);
+};
+var _user$project$FloorPlanTypes$locMapAbbrToReadable = _elm_lang$core$Dict$fromList(
+	{
+		ctor: '::',
+		_0: {ctor: '_Tuple2', _0: 'DESK', _1: 'Desk'},
+		_1: {
+			ctor: '::',
+			_0: {ctor: '_Tuple2', _0: 'OFFICE', _1: 'Office'},
+			_1: {
+				ctor: '::',
+				_0: {ctor: '_Tuple2', _0: 'CONFR', _1: 'Conference Room'},
+				_1: {
+					ctor: '::',
+					_0: {ctor: '_Tuple2', _0: 'COMMON', _1: 'Common Area'},
+					_1: {
+						ctor: '::',
+						_0: {ctor: '_Tuple2', _0: 'RESTROOM', _1: 'Restroom'},
+						_1: {
+							ctor: '::',
+							_0: {ctor: '_Tuple2', _0: 'PUBLIC', _1: 'Public Area'},
+							_1: {
+								ctor: '::',
+								_0: {ctor: '_Tuple2', _0: 'PRIVATE', _1: 'Private Area'},
+								_1: {
+									ctor: '::',
+									_0: {ctor: '_Tuple2', _0: 'MISC', _1: 'Miscellaneous'},
+									_1: {ctor: '[]'}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	});
+var _user$project$FloorPlanTypes$getLocationFromAbbr = function (loc) {
+	return A2(_user$project$FloorPlanTypes$getLocation, loc, _user$project$FloorPlanTypes$locMapAbbrToReadable);
+};
 var _user$project$FloorPlanTypes$newFloorPlan = function (flag) {
 	return {id: flag.id, aspect_ratio: flag.aspect_ratio, image: flag.image, is_public: flag.is_public, is_trashed: flag.is_trashed, name: flag.name, owner: flag.owner, last_updated: flag.last_updated};
 };
@@ -9582,6 +9661,7 @@ var _user$project$Main$locationInfoList = function (locations) {
 	return A2(
 		_elm_lang$core$List$map,
 		function (location) {
+			var locationType = _user$project$FloorPlanTypes$getLocationFromAbbr(location.loc_type);
 			return A2(
 				_elm_lang$html$Html$p,
 				{ctor: '[]'},
@@ -9591,7 +9671,7 @@ var _user$project$Main$locationInfoList = function (locations) {
 						A2(
 							_elm_lang$core$Basics_ops['++'],
 							location.name,
-							A2(_elm_lang$core$Basics_ops['++'], ' - ', location.loc_type))),
+							A2(_elm_lang$core$Basics_ops['++'], ' - ', locationType))),
 					_1: {ctor: '[]'}
 				});
 		},
@@ -9623,6 +9703,7 @@ var _user$project$Main$viewToolTip = function (toolTip) {
 	if ((_p0.ctor === 'Showing') && (_p0._1.ctor === 'Just')) {
 		var _p2 = _p0._1._0;
 		var _p1 = _p0._0;
+		var locationType = _user$project$FloorPlanTypes$getLocationFromAbbr(_p1.loc_type);
 		return A2(
 			_elm_lang$html$Html$div,
 			{
@@ -9735,7 +9816,7 @@ var _user$project$Main$viewToolTip = function (toolTip) {
 												}),
 											_1: {
 												ctor: '::',
-												_0: _elm_lang$html$Html$text(_p1.loc_type),
+												_0: _elm_lang$html$Html$text(locationType),
 												_1: {ctor: '[]'}
 											}
 										}),
@@ -9775,7 +9856,8 @@ var _user$project$Main$updateFilter = F3(
 	});
 var _user$project$Main$filterByType = F2(
 	function (locationType, location) {
-		return _elm_lang$core$Native_Utils.eq(locationType, location.loc_type);
+		var locType = _user$project$FloorPlanTypes$getLocationFromReadable(locationType);
+		return _elm_lang$core$Native_Utils.eq(locType, location.loc_type);
 	});
 var _user$project$Main$filterByName = F2(
 	function (name, location) {
