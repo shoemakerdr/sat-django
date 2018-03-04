@@ -2,10 +2,10 @@
   "name": "elm",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "dev-elm.js",
   "scripts": {
     "elm": "node_modules/elm-live/bin/elm-live.js src/ViewFloorPlan.elm --output=dev-elm.js --open",
-    "update-js": "mv dev-elm.js ../js/elm-bundle.js",
+    "update-js": "node_modules/webpack/bin/webpack.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",

@@ -4,7 +4,7 @@ const CompressionPlugin = require("compression-webpack-plugin");
 
 
 const config = {
-  entry: path.join(__dirname, 'elm'),
+  entry: path.join(__dirname, 'dev-elm'),
   output: {
     path: path.resolve(__dirname, "../js"),
     filename: "elm-bundle.js",
