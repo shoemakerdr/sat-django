@@ -79,6 +79,7 @@ type alias Flags =
         , is_trashed : Bool
         , name : String
         , owner : Int
+        , owner_name : String
         , locations :
             List
                 { id : Int
@@ -278,6 +279,11 @@ view model =
         [ h1
             [ class "floorplan-name" ]
             [ text model.floorplan.name ]
+        , div [] <|
+            if isFloorPlanOwner model then
+                [ button [] [ text "Edit Floor Plan" ] ]
+            else
+                []
         , div
             [ class "floorplan-main-content" ]
             [ viewFilterLocations model
@@ -285,6 +291,11 @@ view model =
             ]
         , viewToolTip model.toolTip
         ]
+
+
+isFloorPlanOwner : Model -> Bool
+isFloorPlanOwner model =
+    model.user == model.floorplan.owner_name
 
 
 svgMap : FloorPlan -> Maybe Dimensions -> List Location -> Html Msg
