@@ -4,6 +4,12 @@ body {
   background-color: #fcf7ef;
 }
 
+button:focus,
+input:focus,
+select:focus {
+  outline: 2px dashed rgba(0,0,0,0.3);
+}
+
 .navbar {
   display: flex;
   justify-content: space-between;
