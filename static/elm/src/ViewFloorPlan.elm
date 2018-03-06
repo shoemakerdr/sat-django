@@ -110,6 +110,8 @@ init flags =
     , floorplanDimensions = Nothing
     , token = flags.token
     , user = flags.user
+    , isOwner = flags.user == flags.floorplan.owner_name
+    , mode = View
     }
         ! [ Task.perform ResizeFloorplan Window.size ]
 
@@ -129,6 +131,8 @@ type alias Model =
     , floorplanDimensions : Maybe Dimensions
     , token : String
     , user : String
+    , isOwner : Bool
+    , mode : Mode
     }
 
 
@@ -148,6 +152,18 @@ type FilterType
     | Type
 
 
+type Mode
+    = View
+    | Edit Editor
+
+
+type Editor
+    = None
+    | Update
+    | Add
+    | Delete
+
+
 type FilterMsg
     = Merge
     | Remove
@@ -164,6 +180,7 @@ type Msg
     | ShowToolTip Location (Maybe Mouse.Position)
     | HideToolTip
     | ResizeFloorplan Size
+    | OpenEditor
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -213,6 +230,9 @@ update msg model =
 
         ResizeFloorplan size ->
             { model | floorplanDimensions = Just <| getFloorplanDimensions size model.floorplan } ! []
+
+        OpenEditor ->
+            { model | mode = Edit <| None } ! []
 
 
 getFloorplanDimensions : Size -> FloorPlan -> Dimensions
@@ -280,8 +300,8 @@ view model =
             [ class "floorplan-name" ]
             [ text model.floorplan.name ]
         , div [] <|
-            if isFloorPlanOwner model then
-                [ button [] [ text "Edit Floor Plan" ] ]
+            if model.isOwner then
+                [ button [ onClick OpenEditor ] [ text "Edit Floor Plan" ] ]
             else
                 []
         , div
@@ -291,11 +311,6 @@ view model =
             ]
         , viewToolTip model.toolTip
         ]
-
-
-isFloorPlanOwner : Model -> Bool
-isFloorPlanOwner model =
-    model.user == model.floorplan.owner_name
 
 
 svgMap : FloorPlan -> Maybe Dimensions -> List Location -> Html Msg
