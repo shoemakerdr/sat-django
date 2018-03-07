@@ -1,6 +1,7 @@
 module Filter
     exposing
-        ( Filter(..)
+        ( Filter
+        , new
         , merge
         , remove
         , apply
@@ -9,6 +10,11 @@ module Filter
 
 type Filter a b
     = Filter a (b -> Bool)
+
+
+new : a -> (b -> Bool) -> Filter a b
+new t predicate =
+    Filter t predicate
 
 
 merge : Filter a b -> List (Filter a b) -> List (Filter a b)
