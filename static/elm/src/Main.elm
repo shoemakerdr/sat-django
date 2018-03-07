@@ -50,7 +50,8 @@ import Window exposing (Size)
 import Task
 import Json.Decode as Json
 import FloorPlanTypes exposing (..)
-import Filter exposing (Filter(..))
+import Filter exposing (Filter)
+import Editor
 
 
 main : Program Flags Model Msg
@@ -154,14 +155,7 @@ type FilterType
 
 type Mode
     = View
-    | Edit Editor
-
-
-type Editor
-    = None
-    | Update
-    | Add
-    | Delete
+    | Edit (Editor.Editor Location)
 
 
 type FilterMsg
@@ -181,6 +175,7 @@ type Msg
     | HideToolTip
     | ResizeFloorplan Size
     | OpenEditor
+    | CloseEditor
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -196,7 +191,7 @@ update msg model =
                         _ ->
                             Merge
             in
-                updateFilter filterMsg (Filter Name (filterByName name)) { model | nameInput = name }
+                updateFilter filterMsg (Filter.new Name (filterByName name)) { model | nameInput = name }
 
         TypeSelectChange locationType ->
             let
@@ -206,7 +201,7 @@ update msg model =
                     else
                         Merge
             in
-                updateFilter filterMsg (Filter Type (filterByType locationType)) { model | typeSelect = locationType }
+                updateFilter filterMsg (Filter.new Type (filterByType locationType)) { model | typeSelect = locationType }
 
         ResetFilterForm ->
             { model
@@ -232,7 +227,10 @@ update msg model =
             { model | floorplanDimensions = Just <| getFloorplanDimensions size model.floorplan } ! []
 
         OpenEditor ->
-            { model | mode = Edit <| None } ! []
+            { model | mode = Edit (Editor.editor model.locations) } ! []
+
+        CloseEditor ->
+            { model | mode = View } ! []
 
 
 getFloorplanDimensions : Size -> FloorPlan -> Dimensions
@@ -301,7 +299,7 @@ view model =
             [ text model.floorplan.name ]
         , div [] <|
             if model.isOwner then
-                [ button [ onClick OpenEditor ] [ text "Edit Floor Plan" ] ]
+                viewEditorPanel model
             else
                 []
         , div
@@ -311,6 +309,28 @@ view model =
             ]
         , viewToolTip model.toolTip
         ]
+
+
+viewEditorPanel : Model -> List (Html Msg)
+viewEditorPanel { mode } =
+    case mode of
+        View ->
+            [ div []
+                [ button [ onClick OpenEditor ] [ text "Edit Floor Plan" ]
+                , div [] []
+                ]
+            ]
+
+        Edit _ ->
+            [ div []
+                [ button [ onClick CloseEditor ] [ text "Save Floor Plan" ]
+                , div []
+                    [ button [] [ text "Update Locations" ]
+                    , button [] [ text "Add Locations" ]
+                    , button [] [ text "Delete Locations" ]
+                    ]
+                ]
+            ]
 
 
 svgMap : FloorPlan -> Maybe Dimensions -> List Location -> Html Msg
