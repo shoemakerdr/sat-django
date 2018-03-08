@@ -2,57 +2,62 @@ module Editor
     exposing
         ( Editor
         , editor
-        , save
+        , retrieve
+        , edit
         , update
-        , (<::>)
+        , create
+        , delete
         )
 
 import List.Extra as Extra
 
 
 type Editor a
-    = Saved (List a)
-    | Updating (Maybe a) (List a)
-    | Adding (Maybe a) (List a)
-    | Deleting (List a)
+    = Editor (Maybe a) (List a)
 
 
 editor : List a -> Editor a
 editor list =
-    Saved list
+    Editor Nothing list
 
 
-save : Editor a -> List a
-save e =
+retrieve : Editor a -> List a
+retrieve e =
     case e of
-        Saved list ->
-            list
-
-        Updating _ list ->
-            list
-
-        Adding _ list ->
-            list
-
-        Deleting list ->
+        Editor _ list ->
             list
 
 
-update : (a -> Bool) -> Maybe a -> List a -> Editor a
-update predicate e list =
-    case e of
+edit : a -> Editor a -> Editor a
+edit new (Editor _ list) =
+    Editor (Just new) list
+
+
+update : (a -> Bool) -> Editor a -> Editor a
+update predicate (Editor current list) =
+    case current of
         Nothing ->
-            Updating Nothing list
+            editor list
 
-        Just item ->
-            Updating Nothing (Extra.updateIf predicate (\_ -> item) list)
+        Just c ->
+            editor (Extra.updateIf predicate (\_ -> c) list)
 
 
-(<::>) : Maybe a -> List a -> List a
-(<::>) item list =
-    case item of
+create : Editor a -> Editor a
+create (Editor current list) =
+    case current of
         Nothing ->
-            list
+            editor list
 
-        Just i ->
-            i :: list
+        Just c ->
+            editor (c :: list)
+
+
+delete : (a -> Bool) -> Editor a -> Editor a
+delete predicate (Editor current list) =
+    case current of
+        Nothing ->
+            editor list
+
+        Just c ->
+            editor (List.filter (not << predicate) list)
