@@ -112,7 +112,7 @@ init flags =
     , token = flags.token
     , user = flags.user
     , isOwner = flags.user == flags.floorplan.owner_name
-    , mode = View
+    , mode = View flags.floorplan.locations
     }
         ! [ Task.perform ResizeFloorplan Window.size ]
 
@@ -154,7 +154,7 @@ type FilterType
 
 
 type Mode
-    = View
+    = View (List Location)
     | Edit (Editor.Editor Location)
 
 
@@ -175,7 +175,8 @@ type Msg
     | HideToolTip
     | ResizeFloorplan Size
     | OpenEditor
-    | CloseEditor
+    | CancelEditor
+    | SaveEditor
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -229,8 +230,21 @@ update msg model =
         OpenEditor ->
             { model | mode = Edit (Editor.editor model.locations) } ! []
 
-        CloseEditor ->
-            { model | mode = View } ! []
+        CancelEditor ->
+            -- need implementation
+            { model | mode = View model.locations } ! []
+
+        SaveEditor ->
+            -- need implementation
+            let
+                newLocations =
+                    saveMode model.mode
+            in
+                { model
+                    | locations = newLocations
+                    , mode = View newLocations
+                }
+                    ! []
 
 
 getFloorplanDimensions : Size -> FloorPlan -> Dimensions
@@ -277,6 +291,16 @@ updateFilter filterMsg filter model =
             ! []
 
 
+saveMode : Mode -> List Location
+saveMode mode =
+    case mode of
+        View locations ->
+            locations
+
+        Edit editor ->
+            Editor.retrieve editor
+
+
 
 -- VIEW
 
@@ -314,7 +338,7 @@ view model =
 viewEditorPanel : Model -> List (Html Msg)
 viewEditorPanel { mode } =
     case mode of
-        View ->
+        View _ ->
             [ div []
                 [ button [ onClick OpenEditor ] [ text "Edit Floor Plan" ]
                 , div [] []
@@ -323,7 +347,7 @@ viewEditorPanel { mode } =
 
         Edit _ ->
             [ div []
-                [ button [ onClick CloseEditor ] [ text "Save Floor Plan" ]
+                [ button [ onClick CancelEditor ] [ text "Save Floor Plan" ]
                 , div []
                     [ button [] [ text "Update Locations" ]
                     , button [] [ text "Add Locations" ]
