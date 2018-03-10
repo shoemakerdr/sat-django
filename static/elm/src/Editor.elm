@@ -4,9 +4,12 @@ module Editor
         , editor
         , retrieve
         , edit
+        , maybeEdit
+        , cancel
         , update
         , create
         , delete
+        , isActive
         )
 
 import List.Extra as Extra
@@ -31,6 +34,16 @@ retrieve e =
 edit : a -> Editor a -> Editor a
 edit new (Editor _ list) =
     Editor (Just new) list
+
+
+maybeEdit : Maybe a -> Editor a -> Editor a
+maybeEdit new (Editor _ list) =
+    Editor new list
+
+
+cancel : Editor a -> Editor a
+cancel (Editor _ list) =
+    editor list
 
 
 update : (a -> Bool) -> Editor a -> Editor a
@@ -61,3 +74,13 @@ delete predicate (Editor current list) =
 
         Just c ->
             editor (List.filter (not << predicate) list)
+
+
+isActive : Editor a -> Bool
+isActive (Editor current _) =
+    case current of
+        Nothing ->
+            (Debug.log "isActive" False)
+
+        Just _ ->
+            (Debug.log "isActive" True)
