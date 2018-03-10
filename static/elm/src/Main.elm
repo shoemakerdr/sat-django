@@ -10,6 +10,7 @@ import Html
         , h1
         , strong
         , button
+        , form
         , input
         , select
         , option
@@ -29,6 +30,7 @@ import Html.Events
     exposing
         ( onClick
         , onInput
+        , onMouseDown
         , onMouseEnter
         , onMouseLeave
         , on
@@ -52,6 +54,8 @@ import Json.Decode as Json
 import FloorPlanTypes exposing (..)
 import Filter exposing (Filter)
 import Editor
+import ToolTip as TT exposing (ToolTip(..))
+import Util exposing ((=>))
 
 
 main : Program Flags Model Msg
@@ -105,7 +109,7 @@ init flags =
     , locations = flags.floorplan.locations
     , nameInput = ""
     , typeSelect = defaultSelect
-    , toolTip = Hidden
+    , toolTip = Hidden Nothing Nothing
     , filteredLocations = flags.floorplan.locations
     , filters = []
     , floorplanDimensions = Nothing
@@ -126,7 +130,7 @@ type alias Model =
     , locations : List Location
     , nameInput : String
     , typeSelect : String
-    , toolTip : ToolTip
+    , toolTip : ToolTip Location
     , filteredLocations : List Location
     , filters : List (Filter FilterType Location)
     , floorplanDimensions : Maybe Dimensions
@@ -141,11 +145,6 @@ type alias Dimensions =
     { width : Float
     , height : Float
     }
-
-
-type ToolTip
-    = Hidden
-    | Showing Location (Maybe Mouse.Position)
 
 
 type FilterType
@@ -171,12 +170,19 @@ type Msg
     = NameInputChange String
     | TypeSelectChange String
     | ResetFilterForm
-    | ShowToolTip Location (Maybe Mouse.Position)
+    | ShowToolTip (Maybe Mouse.Position) Location
     | HideToolTip
     | ResizeFloorplan Size
     | OpenEditor
     | CancelEditor
     | SaveEditor
+    | DoEdit EditMsg
+
+
+type EditMsg
+    = NoOp
+    | OpenToolTipEditor (Maybe Mouse.Position) (Maybe Location)
+    | CloseToolTipEditor
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -213,16 +219,11 @@ update msg model =
             }
                 ! []
 
-        ShowToolTip location position ->
-            case position of
-                Nothing ->
-                    { model | toolTip = Showing location Nothing } ! []
-
-                Just pos ->
-                    { model | toolTip = Showing location (Just pos) } ! []
+        ShowToolTip position location ->
+            { model | toolTip = Shown position (Just location) } ! []
 
         HideToolTip ->
-            { model | toolTip = Hidden } ! []
+            { model | toolTip = Hidden Nothing Nothing } ! []
 
         ResizeFloorplan size ->
             { model | floorplanDimensions = Just <| getFloorplanDimensions size model.floorplan } ! []
@@ -232,7 +233,11 @@ update msg model =
 
         CancelEditor ->
             -- need implementation
-            { model | mode = View model.locations } ! []
+            { model
+                | mode = View model.locations
+                , toolTip = Hidden Nothing Nothing
+            }
+                ! []
 
         SaveEditor ->
             -- need implementation
@@ -245,6 +250,22 @@ update msg model =
                     , mode = View newLocations
                 }
                     ! []
+
+        DoEdit editMsg ->
+            case editMsg of
+                NoOp ->
+                    model ! []
+
+                OpenToolTipEditor position location ->
+                    case model.toolTip of
+                        Hidden _ _ ->
+                            { model | toolTip = Shown Nothing location } ! []
+
+                        Shown _ _ ->
+                            { model | toolTip = Shown position location } ! []
+
+                CloseToolTipEditor ->
+                    { model | toolTip = Hidden Nothing Nothing } ! []
 
 
 getFloorplanDimensions : Size -> FloorPlan -> Dimensions
@@ -305,11 +326,6 @@ saveMode mode =
 -- VIEW
 
 
-(=>) : a -> b -> ( a, b )
-(=>) =
-    (,)
-
-
 onChange : (String -> msg) -> Attribute msg
 onChange tagger =
     on "change" (Json.map tagger targetValue)
@@ -317,22 +333,34 @@ onChange tagger =
 
 view : Model -> Html Msg
 view model =
-    div []
-        [ h1
-            [ class "floorplan-name" ]
-            [ text model.floorplan.name ]
-        , div [] <|
-            if model.isOwner then
-                viewEditorPanel model
-            else
-                []
-        , div
-            [ class "floorplan-main-content" ]
-            [ viewFilterLocations model
-            , svgMap model.floorplan model.floorplanDimensions model.filteredLocations
+    let
+        toolTipView =
+            case model.mode of
+                View _ ->
+                    viewShowToolTip
+
+                Edit _ ->
+                    viewEditToolTip
+
+        config =
+            TT.config 10 10 "tooltip-wrapper" []
+    in
+        div []
+            [ h1
+                [ class "floorplan-name" ]
+                [ text model.floorplan.name ]
+            , div [] <|
+                if model.isOwner then
+                    viewEditorPanel model
+                else
+                    []
+            , div
+                [ class "floorplan-main-content" ]
+                [ viewFilterLocations model
+                , svgMap model
+                ]
+            , TT.view config toolTipView model.toolTip
             ]
-        , viewToolTip model.toolTip
-        ]
 
 
 viewEditorPanel : Model -> List (Html Msg)
@@ -347,19 +375,16 @@ viewEditorPanel { mode } =
 
         Edit _ ->
             [ div []
-                [ button [ onClick CancelEditor ] [ text "Save Floor Plan" ]
-                , div []
-                    [ button [] [ text "Update Locations" ]
-                    , button [] [ text "Add Locations" ]
-                    , button [] [ text "Delete Locations" ]
-                    ]
+                [ button [ onClick SaveEditor ] [ text "Save Changes" ]
+                , button [ onClick CancelEditor ] [ text "Cancel" ]
+                , div [] []
                 ]
             ]
 
 
-svgMap : FloorPlan -> Maybe Dimensions -> List Location -> Html Msg
-svgMap floorplan dimensions locations =
-    case dimensions of
+svgMap : Model -> Html Msg
+svgMap model =
+    case model.floorplanDimensions of
         Nothing ->
             div [] []
 
@@ -369,83 +394,88 @@ svgMap floorplan dimensions locations =
                     [ width <| toString dims.width
                     , height <| toString dims.height
                     , style
-                        [ "background" => ("url(" ++ "http://localhost:8000" ++ floorplan.image ++ ")")
+                        [ "background" => ("url(" ++ "http://localhost:8000" ++ model.floorplan.image ++ ")")
                         , "backgroundSize" => "100% auto"
                         , "backgroundRepeat" => "no-repeat"
                         ]
                     ]
                   <|
-                    plotLocations dims locations
+                    plotLocations dims model
                 ]
 
 
-plotLocations : Dimensions -> List Location -> List (Html Msg)
-plotLocations dimensions locations =
-    locations
+plotLocations : Dimensions -> Model -> List (Html Msg)
+plotLocations dimensions model =
+    model.locations
         |> List.map
             (\location ->
                 circle
-                    [ SvgAttr.class "location-point"
-                    , cx (toString <| location.position_x * dimensions.width)
-                    , cy (toString <| location.position_y * dimensions.height)
-                    , r "8"
-                    , fill "#72acdc"
-                    , fillOpacity "0.5"
-                    , onMouseEnter (ShowToolTip location Nothing)
-                    , onMouseLeave HideToolTip
-                    ]
+                    ([ SvgAttr.class "location-point"
+                     , cx (toString <| location.position_x * dimensions.width)
+                     , cy (toString <| location.position_y * dimensions.height)
+                     , r "8"
+                     , fill "#72acdc"
+                     , fillOpacity "0.5"
+                     ]
+                        ++ locationEvents model.mode location
+                    )
                     []
             )
 
 
-viewToolTip : ToolTip -> Html Msg
-viewToolTip toolTip =
-    case toolTip of
-        Showing location (Just pos) ->
-            let
-                locationType =
-                    getLocationFromAbbr location.loc_type
-            in
-                div
-                    [ class "tooltip-wrapper"
-                    , style
-                        [ "top" => px (pos.y + 10)
-                        , "left" => px (pos.x + 10)
-                        ]
-                    ]
-                    [ div []
-                        [ p []
-                            [ strong [] [ text "Name: " ]
-                            , text location.name
-                            ]
-                        , p []
-                            [ strong [] [ text "Ext: " ]
-                            , text <|
-                                case location.extension of
-                                    Nothing ->
-                                        ""
+locationEvents : Mode -> Location -> List (Attribute Msg)
+locationEvents mode location =
+    case mode of
+        View _ ->
+            [ onMouseEnter (ShowToolTip Nothing location)
+            , onMouseLeave HideToolTip
+            ]
 
-                                    Just x ->
-                                        toString x
-                            ]
-                        , p []
-                            [ strong [] [ text "Details: " ]
-                            , text location.details
-                            ]
-                        , p []
-                            [ strong [] [ text "Type: " ]
-                            , text locationType
-                            ]
-                        ]
-                    ]
+        Edit _ ->
+            [ onClick (DoEdit (OpenToolTipEditor Nothing (Just location)))
 
-        _ ->
-            div [] []
+            -- , onMouseLeave HideToolTip
+            ]
 
 
-px : Int -> String
-px i =
-    toString i ++ "px"
+viewShowToolTip : Location -> Html Msg
+viewShowToolTip location =
+    let
+        locationType =
+            getLocationFromAbbr location.loc_type
+    in
+        div []
+            [ p []
+                [ strong [] [ text "Name: " ]
+                , text location.name
+                ]
+            , p []
+                [ strong [] [ text "Ext: " ]
+                , text <|
+                    case location.extension of
+                        Nothing ->
+                            ""
+
+                        Just x ->
+                            toString x
+                ]
+            , p []
+                [ strong [] [ text "Details: " ]
+                , text location.details
+                ]
+            , p []
+                [ strong [] [ text "Type: " ]
+                , text locationType
+                ]
+            ]
+
+
+viewEditToolTip : Location -> Html Msg
+viewEditToolTip location =
+    div []
+        [ input [ placeholder "Name", value location.name ] []
+        , button [ onClick (DoEdit CloseToolTipEditor) ] [ text "Cancel" ]
+        ]
 
 
 viewFilterLocations : Model -> Html Msg
@@ -525,12 +555,47 @@ locationInfoList locations =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    case model.toolTip of
-        Showing loc Nothing ->
-            Sub.batch [ Mouse.moves (\x -> ShowToolTip loc (Just x)) ]
+    case model.mode of
+        View _ ->
+            case model.toolTip of
+                Shown pos location ->
+                    case location of
+                        Nothing ->
+                            Sub.none
 
-        _ ->
-            Sub.none
+                        Just l ->
+                            case pos of
+                                Nothing ->
+                                    Sub.batch [ Mouse.moves (\x -> ShowToolTip (Just x) l) ]
+
+                                Just _ ->
+                                    Sub.none
+
+                Hidden _ _ ->
+                    Sub.none
+
+        Edit _ ->
+            case model.toolTip of
+                Shown pos location ->
+                    case pos of
+                        Nothing ->
+                            Sub.batch [ Mouse.clicks (\x -> DoEdit (OpenToolTipEditor (Just x) location)) ]
+
+                        Just _ ->
+                            case location of
+                                Nothing ->
+                                    Sub.batch [ Mouse.clicks (\x -> DoEdit (CloseToolTipEditor)) ]
+
+                                Just l ->
+                                    Sub.batch [ Mouse.clicks (\x -> DoEdit (NoOp)) ]
+
+                Hidden pos location ->
+                    case pos of
+                        Nothing ->
+                            Sub.batch [ Mouse.clicks (\x -> DoEdit (OpenToolTipEditor (Just x) location)) ]
+
+                        Just _ ->
+                            Sub.batch [ Mouse.clicks (\x -> DoEdit (CloseToolTipEditor)) ]
 
 
 
