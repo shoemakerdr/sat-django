@@ -332,7 +332,7 @@ update msg model =
                     { model | mode = Edit Move } ! []
 
                 GetNewPosition pos ->
-                    model ! [ findCoordinates pos ]
+                    { model | toolTip = TT.move pos model.toolTip } ! [ findCoordinates pos ]
 
                 SetNewPosition ( x, y ) ->
                     let
