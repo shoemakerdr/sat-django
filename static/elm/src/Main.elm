@@ -243,7 +243,7 @@ update msg model =
             { model
                 | mode = View
                 , toolTip = Hidden Nothing Nothing
-                , editor = Editor.cancel model.editor
+                , editor = Editor.editor model.locations
             }
                 ! []
 
@@ -305,7 +305,7 @@ update msg model =
                 CancelToolTipEditor ->
                     { model
                         | toolTip = Hidden Nothing Nothing
-                        , editor = Editor.editor model.locations
+                        , editor = Editor.cancel model.editor
                     }
                         ! []
 
