@@ -166,6 +166,7 @@ type EditorAction
     | Add
     | WaitingToMove
     | Move
+    | WaitingToDelete
 
 
 type FilterMsg
@@ -203,6 +204,8 @@ type EditMsg
     | ChangeType String
     | ChangeDetails String
     | ChangeExtension String
+    | ReadyToDelete
+    | DeleteLocation
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -407,6 +410,12 @@ update msg model =
                     in
                         { model | editor = newEditor } ! []
 
+                ReadyToDelete ->
+                    { model | mode = Edit WaitingToDelete } ! []
+
+                DeleteLocation ->
+                    model ! []
+
 
 getFloorplanDimensions : Size -> FloorPlan -> Dimensions
 getFloorplanDimensions size floorplan =
@@ -468,6 +477,9 @@ view model =
             case model.mode of
                 View ->
                     viewShowToolTip
+
+                Edit WaitingToDelete ->
+                    viewDeleteToolTip model.editor
 
                 Edit _ ->
                     viewEditToolTip model.editor
@@ -606,10 +618,7 @@ locationEvents mode location =
             ]
 
         Edit _ ->
-            [ onClick (DoEdit (OpenToolTipEditor Nothing (Just location)))
-
-            -- , onMouseLeave HideToolTip
-            ]
+            [ onClick (DoEdit (OpenToolTipEditor Nothing (Just location))) ]
 
 
 viewShowToolTip : Location -> Html Msg
@@ -671,7 +680,29 @@ viewEditToolTip editor loc =
             , div [ class "tooltip-editor-buttons" ]
                 [ button [ onClick (DoEdit SaveToolTipEditor) ] [ text "Save" ]
                 , button [ onClick (DoEdit ReadyToMove) ] [ text "Move" ]
+                , button [ class "delete-button", onClick (DoEdit ReadyToDelete) ] [ text "Delete" ]
                 , button [ onClick (DoEdit CancelToolTipEditor) ] [ text "Cancel" ]
+                ]
+            ]
+
+
+viewDeleteToolTip : Editor Location -> Location -> Html Msg
+viewDeleteToolTip editor loc =
+    let
+        location =
+            case Editor.current editor of
+                Nothing ->
+                    loc
+
+                Just l ->
+                    l
+    in
+        div []
+            [ viewEditToolTip editor location
+            , div []
+                [ div [] [ text ("Are you sure you want to delete " ++ location.name ++ "?") ]
+                , button [] [ text "Yes" ]
+                , button [] [ text "Cancel" ]
                 ]
             ]
 
