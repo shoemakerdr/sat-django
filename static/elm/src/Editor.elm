@@ -3,6 +3,7 @@ module Editor
         ( Editor
         , editor
         , retrieve
+        , current
         , edit
         , maybeEdit
         , cancel
@@ -29,6 +30,11 @@ retrieve e =
     case e of
         Editor _ list ->
             list
+
+
+current : Editor a -> Maybe a
+current (Editor c _) =
+    c
 
 
 edit : a -> Editor a -> Editor a
