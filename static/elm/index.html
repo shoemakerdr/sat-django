@@ -37,7 +37,22 @@
   var user= document.querySelectorAll('[name=username]')[0].value
   var floorplan= document.querySelectorAll('[name=floorplan]')[0].value
   var token = document.querySelectorAll('[name=csrfmiddlewaretoken]')[0].value
-  Elm.Main.embed(container, { token: token, user: user, floorplan: JSON.parse( floorplan ) })
+  var main = Elm.Main.embed(container, { token: token, user: user, floorplan: JSON.parse( floorplan ) })
+
+  main.ports.findCoordinates.subscribe(function(position) {
+    var coordinates = findCoordinates(position)
+    main.ports.coordinates.send(coordinates)
+  })
+
+  function findCoordinates (position) {
+    var svg = document.getElementById("svg")
+    var floorPlan = svg.getBoundingClientRect()
+    var top = floorPlan.top + window.scrollY
+    var left = floorPlan.left + window.scrollX
+    var y = (position.y - top) / floorPlan.height
+    var x = (position.x - left) / floorPlan.width
+    return [x, y]
+  }
 </script>
 
 
