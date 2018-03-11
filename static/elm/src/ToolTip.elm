@@ -3,6 +3,7 @@ module ToolTip
         ( ToolTip(..)
         , show
         , hide
+        , move
         , config
         , view
         )
@@ -39,6 +40,16 @@ hide toolTip =
 
         Shown pos model ->
             Hidden pos model
+
+
+move : Position -> ToolTip model -> ToolTip model
+move pos toolTip =
+    case toolTip of
+        Hidden _ model ->
+            Hidden (Just pos) model
+
+        Shown _ model ->
+            Shown (Just pos) model
 
 
 
