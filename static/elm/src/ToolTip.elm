@@ -1,6 +1,8 @@
 module ToolTip
     exposing
         ( ToolTip(..)
+        , show
+        , hide
         , config
         , view
         )
@@ -17,6 +19,26 @@ import Mouse exposing (Position)
 type ToolTip model
     = Hidden (Maybe Position) (Maybe model)
     | Shown (Maybe Position) (Maybe model)
+
+
+show : ToolTip model -> ToolTip model
+show toolTip =
+    case toolTip of
+        Hidden pos model ->
+            Shown pos model
+
+        Shown _ _ ->
+            toolTip
+
+
+hide : ToolTip model -> ToolTip model
+hide toolTip =
+    case toolTip of
+        Hidden _ _ ->
+            toolTip
+
+        Shown pos model ->
+            Hidden pos model
 
 
 
