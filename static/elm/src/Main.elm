@@ -206,6 +206,7 @@ type EditMsg
     | ChangeExtension String
     | ReadyToDelete
     | DeleteLocation
+    | CancelDelete
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -300,11 +301,8 @@ update msg model =
 
                 SaveToolTipEditor ->
                     let
-                        current =
-                            Editor.current model.editor
-
                         newEditor =
-                            case current of
+                            case Editor.current model.editor of
                                 Nothing ->
                                     model.editor
 
@@ -414,7 +412,24 @@ update msg model =
                     { model | mode = Edit WaitingToDelete } ! []
 
                 DeleteLocation ->
-                    model ! []
+                    let
+                        newEditor =
+                            case Editor.current model.editor of
+                                Nothing ->
+                                    model.editor
+
+                                Just c ->
+                                    Editor.delete (\l -> l.id == c.id) model.editor
+                    in
+                        { model
+                            | mode = Edit WaitingToEdit
+                            , editor = newEditor
+                            , toolTip = Hidden Nothing Nothing
+                        }
+                            ! []
+
+                CancelDelete ->
+                    { model | mode = Edit WaitingToEdit } ! []
 
 
 getFloorplanDimensions : Size -> FloorPlan -> Dimensions
@@ -700,9 +715,11 @@ viewDeleteToolTip editor loc =
         div []
             [ viewEditToolTip editor location
             , div []
-                [ div [] [ text ("Are you sure you want to delete " ++ location.name ++ "?") ]
-                , button [] [ text "Yes" ]
-                , button [] [ text "Cancel" ]
+                [ p [ class "delete-warning" ] [ text ("Are you sure you want to delete " ++ location.name ++ "?") ]
+                , div [ class "tooltip-editor-buttons" ]
+                    [ button [ class "delete-button", onClick (DoEdit DeleteLocation) ] [ text "Yes" ]
+                    , button [ onClick (DoEdit CancelDelete) ] [ text "Cancel" ]
+                    ]
                 ]
             ]
 
