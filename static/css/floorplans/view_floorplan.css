@@ -73,6 +73,18 @@
   margin-left: 16px;
 }
 
+.delete-warning {
+  text-align: center;
+}
+
+.delete-button {
+  background-color: pink;
+}
+
+.delete-button:hover {
+  background-color: #dc7272;
+}
+
 .location-filter-wrapper {
   margin-bottom: 20px;
 }
