@@ -6,6 +6,7 @@ module Data.Location
         , typeFromString
         , fromAbbr
         , fromReadable
+        , extensionToString
         , decodeLocations
         )
 
@@ -72,6 +73,16 @@ readableToAbbr =
         , ( "Private Area", "PRIVATE" )
         , ( "Miscellaneous", "MISC" )
         ]
+
+
+extensionToString : Maybe Int -> String
+extensionToString ext =
+    case ext of
+        Nothing ->
+            ""
+
+        Just x ->
+            toString x
 
 
 typeFromString : String -> Dict String String -> String
