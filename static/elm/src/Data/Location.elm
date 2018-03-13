@@ -1,12 +1,16 @@
 module Data.Location
     exposing
         ( Location
+        , Id
         , equal
         , typeFromString
         , fromAbbr
         , fromReadable
+        , decodeLocations
         )
 
+import Json.Decode as Json
+import Json.Decode.Pipeline as Pipeline
 import Dict exposing (Dict)
 
 
@@ -87,3 +91,39 @@ fromAbbr loc =
 fromReadable : String -> String
 fromReadable loc =
     typeFromString loc readableToAbbr
+
+
+decodeLocations : Json.Value -> List Location
+decodeLocations value =
+    case Json.decodeValue locationsDecoder value of
+        Ok locations ->
+            locations
+
+        Err err ->
+            Debug.crash err
+
+
+locationsDecoder : Json.Decoder (List Location)
+locationsDecoder =
+    Json.list locationDecoder
+
+
+locationDecoder : Json.Decoder Location
+locationDecoder =
+    Pipeline.decode Location
+        |> Pipeline.required "id" idDecoder
+        |> Pipeline.required "floorplan" Json.int
+        |> Pipeline.required "name" Json.string
+        |> Pipeline.required "loc_type" Json.string
+        |> Pipeline.required "details" Json.string
+        |> Pipeline.required "extension" (Json.nullable Json.int)
+        |> Pipeline.required "is_trashed" Json.bool
+        |> Pipeline.required "position_x" Json.float
+        |> Pipeline.required "position_y" Json.float
+        |> Pipeline.required "last_updated" Json.string
+
+
+idDecoder : Json.Decoder Id
+idDecoder =
+    Json.int
+        |> Json.andThen (\i -> Json.succeed (Old i))
