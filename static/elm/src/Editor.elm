@@ -10,6 +10,7 @@ module Editor
         , update
         , create
         , delete
+        , newWithDefault
         , isActive
         )
 
@@ -80,6 +81,16 @@ delete predicate (Editor current list) =
 
         Just c ->
             editor (List.filter (not << predicate) list)
+
+
+newWithDefault : (a -> Editor a -> Editor a) -> Editor a -> Editor a
+newWithDefault func editor =
+    case current editor of
+        Nothing ->
+            editor
+
+        Just c ->
+            func c editor
 
 
 isActive : Editor a -> Bool
