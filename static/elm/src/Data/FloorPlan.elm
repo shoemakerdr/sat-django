@@ -1,10 +1,11 @@
 module Data.FloorPlan
     exposing
         ( FloorPlan
+        , Flag
         , floorplan
         )
 
-import Data.Location exposing (Location)
+import Json.Decode as Json
 
 
 type alias FloorPlan =
@@ -21,7 +22,7 @@ type alias FloorPlan =
 
 
 type alias Flag a =
-    { a | locations : List Location }
+    { a | locations : Json.Value }
 
 
 floorplan : Flag FloorPlan -> FloorPlan
