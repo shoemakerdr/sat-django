@@ -53,9 +53,10 @@ import Mouse exposing (Position)
 import Window exposing (Size)
 import Task
 import Json.Decode as Json
-import FloorPlanTypes exposing (..)
-import Filter exposing (Filter)
-import Editor exposing (Editor)
+import Data.FloorPlan as FloorPlan exposing (FloorPlan)
+import Data.Location as Location exposing (Location, Id)
+import Data.Filter as Filter exposing (Filter)
+import Data.Editor as Editor exposing (Editor)
 import ToolTip as TT exposing (ToolTip(..))
 import Util exposing ((=>))
 
@@ -87,19 +88,7 @@ type alias Flags =
         , name : String
         , owner : Int
         , owner_name : String
-        , locations :
-            List
-                { id : Int
-                , floorplan : Int
-                , name : String
-                , loc_type : String
-                , details : String
-                , extension : Maybe Int
-                , is_trashed : Bool
-                , position_x : Float
-                , position_y : Float
-                , last_updated : String
-                }
+        , locations : Json.Value
         , last_updated : String
         }
     }
@@ -107,21 +96,25 @@ type alias Flags =
 
 init : Flags -> ( Model, Cmd Msg )
 init flags =
-    { floorplan = newFloorPlan flags.floorplan
-    , locations = flags.floorplan.locations
-    , nameInput = ""
-    , typeSelect = defaultSelect
-    , toolTip = Hidden Nothing Nothing
-    , filteredLocations = flags.floorplan.locations
-    , filters = []
-    , floorplanDimensions = Nothing
-    , token = flags.token
-    , user = flags.user
-    , isOwner = flags.user == flags.floorplan.owner_name
-    , mode = View
-    , editor = Editor.editor flags.floorplan.locations
-    }
-        ! [ Task.perform ResizeFloorplan Window.size ]
+    let
+        locations =
+            Location.decodeLocations flags.floorplan.locations
+    in
+        { floorplan = FloorPlan.floorplan flags.floorplan
+        , locations = locations
+        , nameInput = ""
+        , typeSelect = defaultSelect
+        , toolTip = Hidden Nothing Nothing
+        , filteredLocations = locations
+        , filters = []
+        , floorplanDimensions = Nothing
+        , token = flags.token
+        , user = flags.user
+        , isOwner = flags.user == flags.floorplan.owner_name
+        , mode = View
+        , editor = Editor.editor locations
+        }
+            ! [ Task.perform ResizeFloorplan Window.size ]
 
 
 
@@ -302,12 +295,7 @@ update msg model =
                 SaveToolTipEditor ->
                     let
                         newEditor =
-                            case Editor.current model.editor of
-                                Nothing ->
-                                    model.editor
-
-                                Just c ->
-                                    Editor.update (\l -> l.id == c.id) model.editor
+                            Editor.newWithDefault (\c -> Editor.update (Location.equal c)) model.editor
                     in
                         { model
                             | toolTip = Hidden Nothing Nothing
@@ -338,12 +326,11 @@ update msg model =
                 SetNewPosition ( x, y ) ->
                     let
                         newEditor =
-                            case Editor.current model.editor of
-                                Nothing ->
-                                    model.editor
-
-                                Just location ->
-                                    Editor.edit { location | position_x = x, position_y = y } model.editor
+                            Editor.newWithDefault
+                                (\location ->
+                                    Editor.edit { location | position_x = x, position_y = y }
+                                )
+                                model.editor
                     in
                         { model
                             | editor = newEditor
@@ -355,36 +342,33 @@ update msg model =
                 ChangeName name ->
                     let
                         newEditor =
-                            case Editor.current model.editor of
-                                Nothing ->
-                                    model.editor
-
-                                Just location ->
-                                    Editor.edit { location | name = name } model.editor
+                            Editor.newWithDefault
+                                (\location ->
+                                    Editor.edit { location | name = name }
+                                )
+                                model.editor
                     in
                         { model | editor = newEditor } ! []
 
                 ChangeType loc_type ->
                     let
                         newEditor =
-                            case Editor.current model.editor of
-                                Nothing ->
-                                    model.editor
-
-                                Just location ->
-                                    Editor.edit { location | loc_type = getLocationFromReadable loc_type } model.editor
+                            Editor.newWithDefault
+                                (\location ->
+                                    Editor.edit { location | loc_type = Location.fromReadable loc_type }
+                                )
+                                model.editor
                     in
                         { model | editor = newEditor } ! []
 
                 ChangeDetails details ->
                     let
                         newEditor =
-                            case Editor.current model.editor of
-                                Nothing ->
-                                    model.editor
-
-                                Just location ->
-                                    Editor.edit { location | details = details } model.editor
+                            Editor.newWithDefault
+                                (\location ->
+                                    Editor.edit { location | details = details }
+                                )
+                                model.editor
                     in
                         { model | editor = newEditor } ! []
 
@@ -399,12 +383,11 @@ update msg model =
                                     Nothing
 
                         newEditor =
-                            case Editor.current model.editor of
-                                Nothing ->
-                                    model.editor
-
-                                Just location ->
-                                    Editor.edit { location | extension = ext } model.editor
+                            Editor.newWithDefault
+                                (\location ->
+                                    Editor.edit { location | extension = ext }
+                                )
+                                model.editor
                     in
                         { model | editor = newEditor } ! []
 
@@ -414,12 +397,11 @@ update msg model =
                 DeleteLocation ->
                     let
                         newEditor =
-                            case Editor.current model.editor of
-                                Nothing ->
-                                    model.editor
-
-                                Just c ->
-                                    Editor.delete (\l -> l.id == c.id) model.editor
+                            Editor.newWithDefault
+                                (\c ->
+                                    Editor.delete (Location.equal c)
+                                )
+                                model.editor
                     in
                         { model
                             | mode = Edit WaitingToEdit
@@ -452,7 +434,7 @@ filterByType : String -> Location -> Bool
 filterByType locationType location =
     let
         locType =
-            getLocationFromReadable locationType
+            Location.fromReadable locationType
     in
         locType == location.loc_type
 
@@ -640,7 +622,7 @@ viewShowToolTip : Location -> Html Msg
 viewShowToolTip location =
     let
         locationType =
-            getLocationFromAbbr location.loc_type
+            Location.fromAbbr location.loc_type
     in
         div []
             [ p []
@@ -689,7 +671,7 @@ viewEditToolTip editor loc =
     in
         div [ class "tooltip-editor" ]
             [ input [ placeholder "Name", value location.name, onInput (\s -> DoEdit (ChangeName s)) ] []
-            , select [ class "form-select-type", onChange (\s -> DoEdit (ChangeType s)) ] <| optionList (getLocationFromAbbr location.loc_type) False
+            , select [ class "form-select-type", onChange (\s -> DoEdit (ChangeType s)) ] <| optionList (Location.fromAbbr location.loc_type) False
             , input [ placeholder "Details", value location.details, onInput (\s -> DoEdit (ChangeDetails s)) ] []
             , input [ placeholder "Extension", value extension, onInput (\s -> DoEdit (ChangeExtension s)) ] []
             , div [ class "tooltip-editor-buttons" ]
@@ -801,7 +783,7 @@ locationInfoList locations =
             (\location ->
                 let
                     locationType =
-                        getLocationFromAbbr location.loc_type
+                        Location.fromAbbr location.loc_type
                 in
                     p [] [ text <| location.name ++ " - " ++ locationType ]
             )
