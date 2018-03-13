@@ -631,13 +631,7 @@ viewShowToolTip location =
                 ]
             , p []
                 [ strong [] [ text "Ext: " ]
-                , text <|
-                    case location.extension of
-                        Nothing ->
-                            ""
-
-                        Just x ->
-                            toString x
+                , text <| Location.extensionToString location.extension
                 ]
             , p []
                 [ strong [] [ text "Details: " ]
@@ -662,12 +656,7 @@ viewEditToolTip editor loc =
                     l
 
         extension =
-            case Maybe.withDefault (-1) location.extension of
-                (-1) ->
-                    ""
-
-                ext ->
-                    toString ext
+            Location.extensionToString location.extension
     in
         div [ class "tooltip-editor" ]
             [ input [ placeholder "Name", value location.name, onInput (\s -> DoEdit (ChangeName s)) ] []
@@ -784,8 +773,17 @@ locationInfoList locations =
                 let
                     locationType =
                         Location.fromAbbr location.loc_type
+
+                    extension =
+                        Location.extensionToString location.extension
+
+                    extString =
+                        if extension == "" then
+                            ""
+                        else
+                            ", ext. " ++ extension
                 in
-                    p [] [ text <| location.name ++ " - " ++ locationType ]
+                    p [ class "location-list-info" ] [ text <| location.name ++ " - " ++ locationType ++ extString ]
             )
 
 
