@@ -2,7 +2,11 @@ module Data.Location
     exposing
         ( Location
         , Id
+        , blank
         , equal
+        , isNew
+        , newId
+        , intFromId
         , typeFromString
         , fromAbbr
         , fromReadable
@@ -34,6 +38,21 @@ type Id
     | Old Int
 
 
+blank : Int -> Int -> Location
+blank id floorplanId =
+    { id = New id
+    , floorplan = floorplanId
+    , name = ""
+    , loc_type = ""
+    , details = ""
+    , extension = Nothing
+    , is_trashed = False
+    , position_x = 0
+    , position_y = 0
+    , last_updated = ""
+    }
+
+
 equal : Location -> Location -> Bool
 equal l1 l2 =
     case ( .id l1, .id l2 ) of
@@ -45,6 +64,31 @@ equal l1 l2 =
 
         _ ->
             False
+
+
+isNew : Location -> Bool
+isNew l =
+    case l.id of
+        New _ ->
+            True
+
+        _ ->
+            False
+
+
+newId : Int -> Id
+newId i =
+    New i
+
+
+intFromId : Id -> Int
+intFromId id =
+    case id of
+        New i ->
+            i
+
+        Old i ->
+            i
 
 
 abbrToReadable : Dict String String
