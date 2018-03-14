@@ -159,7 +159,7 @@ type Status
     | Add
     | WaitingToMove
     | Move
-    | WaitingToDelete
+    | DeleteConfirmation
 
 
 type FilterMsg
@@ -393,7 +393,7 @@ update msg model =
                         { model | editor = newEditor } ! []
 
                 ReadyToDelete ->
-                    { model | mode = Edit WaitingToDelete } ! []
+                    { model | mode = Edit DeleteConfirmation } ! []
 
                 DeleteLocation ->
                     let
@@ -479,7 +479,7 @@ view model =
                 View ->
                     viewShowToolTip
 
-                Edit WaitingToDelete ->
+                Edit DeleteConfirmation ->
                     viewDeleteToolTip model.editor
 
                 Edit _ ->
