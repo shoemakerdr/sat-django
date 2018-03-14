@@ -151,10 +151,10 @@ type FilterType
 
 type Mode
     = View
-    | Edit EditorAction
+    | Edit Status
 
 
-type EditorAction
+type Status
     = WaitingToEdit
     | Add
     | WaitingToMove
@@ -200,6 +200,7 @@ type EditMsg
     | ReadyToDelete
     | DeleteLocation
     | CancelDelete
+    | AddNewLocation
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -412,6 +413,9 @@ update msg model =
 
                 CancelDelete ->
                     { model | mode = Edit WaitingToEdit } ! []
+
+                AddNewLocation ->
+                    model ! []
 
 
 getFloorplanDimensions : Size -> FloorPlan -> Dimensions
