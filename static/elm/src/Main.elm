@@ -35,10 +35,8 @@ import Html.Events
         , onMouseDown
         , onMouseEnter
         , onMouseLeave
-        , on
-        , targetValue
         )
-import Svg exposing (svg, circle)
+import Svg exposing (Svg, svg, circle)
 import Svg.Attributes as SvgAttr
     exposing
         ( width
@@ -58,7 +56,7 @@ import Data.Location as Location exposing (Location, Id)
 import Data.Filter as Filter exposing (Filter)
 import Data.Editor as Editor exposing (Editor)
 import ToolTip as TT exposing (ToolTip(..))
-import Util exposing ((=>))
+import Util exposing ((=>), onChange, onClickWithPosition)
 
 
 main : Program Flags Model Msg
@@ -104,8 +102,7 @@ init flags =
         , locations = locations
         , nameInput = ""
         , typeSelect = defaultSelect
-        , toolTip = Hidden Nothing Nothing
-        , filteredLocations = locations
+        , toolTip = Hidden Nothing
         , filters = []
         , floorplanDimensions = Nothing
         , token = flags.token
@@ -126,8 +123,7 @@ type alias Model =
     , locations : List Location
     , nameInput : String
     , typeSelect : String
-    , toolTip : ToolTip Location
-    , filteredLocations : List Location
+    , toolTip : ToolTip
     , filters : List (Filter FilterType Location)
     , floorplanDimensions : Maybe Dimensions
     , token : String
@@ -155,10 +151,11 @@ type Mode
 
 
 type Status
-    = WaitingToEdit
-    | Add
-    | WaitingToMove
-    | Move
+    = Waiting
+    | Adding
+    | Editing
+    | PreparingForMove
+    | Moving
     | DeleteConfirmation
 
 
@@ -175,23 +172,24 @@ type Msg
     = NameInputChange String
     | TypeSelectChange String
     | ResetFilterForm
-    | ShowToolTip (Maybe Mouse.Position) Location
+    | ShowLocationInfo Location
+    | ShowToolTip (Maybe Position)
     | HideToolTip
     | ResizeFloorplan Size
-    | OpenEditor
-    | CancelEditor
-    | SaveEditor
+    | OpenEdit
+    | CancelEdit
+    | SaveEdit
     | DoEdit EditMsg
 
 
 type EditMsg
     = NoOp
-    | OpenToolTipEditor (Maybe Mouse.Position) (Maybe Location)
-    | SaveToolTipEditor
+    | OpenToolTipEditor (Maybe Location) Position
+    | SaveToolTipEditor Location
     | CancelToolTipEditor
     | ReadyToMove
     | CanSetMove
-    | GetNewPosition Mouse.Position
+    | GetNewPosition Position
     | SetNewPosition ( Float, Float )
     | ChangeName String
     | ChangeType String
@@ -205,7 +203,7 @@ type EditMsg
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    case msg of
+    case (Debug.log "msg" msg) of
         NameInputChange name ->
             let
                 filterMsg =
@@ -232,40 +230,66 @@ update msg model =
             { model
                 | nameInput = ""
                 , typeSelect = defaultSelect
-                , filteredLocations = model.locations
                 , filters = []
             }
                 ! []
 
-        ShowToolTip position location ->
-            { model | toolTip = Shown position (Just location) } ! []
+        ShowLocationInfo location ->
+            let
+                newEditor =
+                    Editor.edit location model.editor
+            in
+                { model
+                    | editor = newEditor
+                    , toolTip = Shown Nothing
+                }
+                    ! []
+
+        ShowToolTip position ->
+            let
+                newMode =
+                    case model.mode of
+                        View ->
+                            model.mode
+
+                        Edit _ ->
+                            Edit Editing
+            in
+                { model
+                    | toolTip = Shown position
+                    , mode = newMode
+                }
+                    ! []
 
         HideToolTip ->
-            { model | toolTip = Hidden Nothing Nothing } ! []
+            { model
+                | toolTip = Hidden Nothing
+                , editor = Editor.cancel model.editor
+            }
+                ! []
 
         ResizeFloorplan size ->
             { model | floorplanDimensions = Just <| getFloorplanDimensions size model.floorplan } ! []
 
-        OpenEditor ->
-            { model | mode = Edit WaitingToEdit } ! []
+        OpenEdit ->
+            { model | mode = Edit Waiting } ! []
 
-        CancelEditor ->
+        CancelEdit ->
             { model
                 | mode = View
-                , toolTip = Hidden Nothing Nothing
+                , toolTip = Hidden Nothing
                 , editor = Editor.editor model.locations
             }
                 ! []
 
-        SaveEditor ->
+        SaveEdit ->
             let
                 newLocations =
-                    Editor.retrieve model.editor
+                    Editor.list model.editor
             in
                 { model
                     | locations = newLocations
-                    , filteredLocations = newLocations
-                    , toolTip = Hidden Nothing Nothing
+                    , toolTip = Hidden Nothing
                     , mode = View
                     , editor = Editor.editor newLocations
                 }
@@ -276,50 +300,82 @@ update msg model =
                 NoOp ->
                     model ! []
 
-                OpenToolTipEditor position location ->
-                    case model.toolTip of
-                        Hidden _ _ ->
-                            { model | toolTip = Shown Nothing location } ! []
+                OpenToolTipEditor location position ->
+                    case Editor.current model.editor of
+                        Nothing ->
+                            let
+                                id =
+                                    Location.nextId model.locations
 
-                        Shown pos loc ->
-                            case ( pos, loc ) of
-                                ( Just _, Just _ ) ->
-                                    model ! []
+                                loc =
+                                    Maybe.withDefault (Location.blank id model.floorplan.id) location
 
-                                _ ->
-                                    { model
-                                        | toolTip = Shown position location
-                                        , editor = Editor.maybeEdit location model.editor
-                                    }
-                                        ! []
+                                newToolTip =
+                                    case location of
+                                        Nothing ->
+                                            Hidden (Just position)
 
-                SaveToolTipEditor ->
+                                        Just _ ->
+                                            Shown (Just position)
+
+                                cmd =
+                                    case location of
+                                        Nothing ->
+                                            findCoordinates position
+
+                                        Just _ ->
+                                            Cmd.none
+
+                                newMode =
+                                    case location of
+                                        Nothing ->
+                                            Edit Adding
+
+                                        Just _ ->
+                                            Edit Editing
+                            in
+                                { model
+                                    | editor = Editor.edit loc model.editor
+                                    , mode = newMode
+                                    , toolTip = newToolTip
+                                }
+                                    ! [ cmd ]
+
+                        Just _ ->
+                            model ! []
+
+                SaveToolTipEditor location ->
                     let
                         newEditor =
-                            Editor.newWithDefault (\c -> Editor.update (Location.equal c)) model.editor
+                            if Location.isNew location then
+                                Editor.create model.editor
+                            else
+                                Editor.newWithDefault (\c -> Editor.update (Location.equal c)) model.editor
                     in
                         { model
-                            | toolTip = Hidden Nothing Nothing
+                            | toolTip = Hidden Nothing
                             , editor = newEditor
+                            , mode = Edit Waiting
                         }
                             ! []
 
                 CancelToolTipEditor ->
                     { model
-                        | toolTip = Hidden Nothing Nothing
+                        | toolTip = Hidden Nothing
                         , editor = Editor.cancel model.editor
+                        , mode = Edit Waiting
                     }
                         ! []
 
                 ReadyToMove ->
                     { model
-                        | mode = Edit (WaitingToMove)
+                        | mode = Edit PreparingForMove
                         , toolTip = TT.hide model.toolTip
                     }
                         ! [ Task.perform (\_ -> DoEdit CanSetMove) (Task.succeed ()) ]
 
                 CanSetMove ->
-                    { model | mode = Edit Move } ! []
+                    { model | mode = Edit Moving } ! []
 
                 GetNewPosition pos ->
                     { model | toolTip = TT.move pos model.toolTip } ! [ findCoordinates pos ]
@@ -336,7 +392,7 @@ update msg model =
                         { model
                             | editor = newEditor
                             , toolTip = TT.show model.toolTip
-                            , mode = Edit WaitingToEdit
+                            , mode = Edit Editing
                         }
                             ! []
 
@@ -405,14 +461,14 @@ update msg model =
                                 model.editor
                     in
                         { model
-                            | mode = Edit WaitingToEdit
+                            | mode = Edit Waiting
                             , editor = newEditor
-                            , toolTip = Hidden Nothing Nothing
+                            , toolTip = Hidden Nothing
                         }
                             ! []
 
                 CancelDelete ->
-                    { model | mode = Edit WaitingToEdit } ! []
+                    { model | mode = Edit Waiting } ! []
 
                 AddNewLocation ->
                     model ! []
@@ -445,45 +501,40 @@ filterByType locationType location =
 
 updateFilter : FilterMsg -> Filter FilterType Location -> Model -> ( Model, Cmd Msg )
 updateFilter filterMsg filter model =
-    let
-        filters =
+    { model
+        | filters =
             case filterMsg of
                 Remove ->
                     Filter.remove filter model.filters
 
                 Merge ->
                     Filter.merge filter model.filters
-    in
-        { model
-            | filteredLocations =
-                Filter.apply filters model.locations
-            , filters = filters
-        }
-            ! []
+    }
+        ! []
 
 
 
 -- VIEW
 
 
-onChange : (String -> msg) -> Attribute msg
-onChange tagger =
-    on "change" (Json.map tagger targetValue)
-
-
 view : Model -> Html Msg
 view model =
     let
         toolTipView =
-            case model.mode of
-                View ->
-                    viewShowToolTip
+            case Editor.current model.editor of
+                Nothing ->
+                    div [] []
 
-                Edit DeleteConfirmation ->
-                    viewDeleteToolTip model.editor
+                Just location ->
+                    case model.mode of
+                        View ->
+                            viewShowToolTip location
 
-                Edit _ ->
-                    viewEditToolTip model.editor
+                        Edit DeleteConfirmation ->
+                            viewDeleteToolTip location
+
+                        Edit _ ->
+                            viewEditToolTip location
 
         config =
             TT.config 10 10 "tooltip-wrapper" []
@@ -499,10 +550,10 @@ view model =
                     []
             , div
                 [ class "floorplan-main-content" ]
-                [ viewFilterLocations model
+                [ viewFilterPanel model
                 , svgMap model
                 ]
-            , TT.view config toolTipView model.toolTip
+            , TT.view config (toolTipView) model.toolTip
             ]
 
 
@@ -511,15 +562,15 @@ viewEditorPanel { mode } =
     case mode of
         View ->
             [ div [ class "editor-panel" ]
-                [ button [ onClick OpenEditor ] [ text "Edit Floor Plan" ]
+                [ button [ onClick OpenEdit ] [ text "Edit Floor Plan" ]
                 , div [] []
                 ]
             ]
 
         Edit _ ->
             [ div [ class "editor-panel" ]
-                [ button [ onClick SaveEditor ] [ text "Save Changes" ]
-                , button [ onClick CancelEditor ] [ text "Cancel" ]
+                [ button [ onClick SaveEdit ] [ text "Save Changes" ]
+                , button [ onClick CancelEdit ] [ text "Cancel" ]
                 , div [] []
                 ]
             ]
@@ -527,99 +578,103 @@ viewEditorPanel { mode } =
 
 svgMap : Model -> Html Msg
 svgMap model =
-    case model.floorplanDimensions of
-        Nothing ->
-            div [] []
+    let
+        clickEvents =
+            case model.mode of
+                Edit Waiting ->
+                    [ onClickWithPosition (\position -> DoEdit (OpenToolTipEditor Nothing position)) ]
 
-        Just dims ->
-            div [ class "floorplan-map-wrapper" ]
-                [ svg
-                    [ id "svg"
-                    , width <| toString dims.width
-                    , height <| toString dims.height
-                    , style
-                        [ "background" => ("url(" ++ "http://localhost:8000" ++ model.floorplan.image ++ ")")
-                        , "backgroundSize" => "100% auto"
-                        , "backgroundRepeat" => "no-repeat"
-                        ]
+                _ ->
+                    []
+    in
+        case model.floorplanDimensions of
+            Nothing ->
+                div [] []
+
+            Just dims ->
+                div [ class "floorplan-map-wrapper" ]
+                    [ svg
+                        ([ id "svg"
+                         , width <| toString dims.width
+                         , height <| toString dims.height
+                         , style
+                            [ "background" => ("url(" ++ "http://localhost:8000" ++ model.floorplan.image ++ ")")
+                            , "backgroundSize" => "100% auto"
+                            , "backgroundRepeat" => "no-repeat"
+                            ]
+                         ]
+                            ++ clickEvents
+                        )
+                      <|
+                        plotLocations dims model
                     ]
-                  <|
-                    plotLocations dims model
-                ]
 
 
 plotLocations : Dimensions -> Model -> List (Html Msg)
 plotLocations dimensions model =
     let
+        filteredLocations =
+            Filter.apply model.filters (Editor.list model.editor)
+
         locations =
             case model.mode of
                 View ->
-                    model.filteredLocations
+                    filteredLocations
 
                 Edit _ ->
-                    Filter.apply model.filters (Editor.retrieve model.editor)
+                    case Editor.current model.editor of
+                        Nothing ->
+                            filteredLocations
+
+                        Just l ->
+                            List.filter (not << (Location.equal l)) filteredLocations
+
+        current =
+            case model.mode of
+                View ->
+                    [ circle [ SvgAttr.visibility "collapse" ] [] ]
+
+                Edit _ ->
+                    Editor.current model.editor
+                        |> Maybe.map
+                            (\location ->
+                                [ viewCircle "#FF0000" "editing-location-point" model.mode dimensions location ]
+                            )
+                        |> Maybe.withDefault []
     in
         locations
-            |> removeCurrentEditingLocation model.editor
             |> List.map
                 (\location ->
-                    circle
-                        ([ SvgAttr.class "location-point"
-                         , cx (toString <| location.position_x * dimensions.width)
-                         , cy (toString <| location.position_y * dimensions.height)
-                         , r "8"
-                         , fill "#72acdc"
-                         , fillOpacity "0.5"
-                         ]
-                            ++ locationEvents model.mode location
-                        )
-                        []
+                    viewCircle "#72acdc" "location-point" model.mode dimensions location
                 )
-            |> appendCurrentEditing dimensions model
+            |> (++) current
 
 
-removeCurrentEditingLocation : Editor Location -> List Location -> List Location
-removeCurrentEditingLocation editor locations =
-    case Editor.current editor of
-        Nothing ->
-            locations
-
-        Just loc ->
-            List.filter (\l -> l.id /= loc.id) locations
-
-
-appendCurrentEditing : Dimensions -> Model -> List (Html Msg) -> List (Html Msg)
-appendCurrentEditing dimensions model locations =
-    case Editor.current model.editor of
-        Nothing ->
-            locations
-
-        Just location ->
-            locations
-                ++ [ circle
-                        ([ SvgAttr.class "editing-location-point"
-                         , cx (toString <| location.position_x * dimensions.width)
-                         , cy (toString <| location.position_y * dimensions.height)
-                         , r "8"
-                         , fill "#FF0000"
-                         , fillOpacity "0.5"
-                         ]
-                            ++ locationEvents model.mode location
-                        )
-                        []
-                   ]
+viewCircle : String -> String -> Mode -> Dimensions -> Location -> Svg Msg
+viewCircle color className mode dimensions location =
+    circle
+        ([ SvgAttr.class className
+         , cx (toString <| location.position_x * dimensions.width)
+         , cy (toString <| location.position_y * dimensions.height)
+         , r "8"
+         , fill color
+         , fillOpacity "0.5"
+         ]
+            ++ locationEvents mode location
+        )
+        []
 
 
 locationEvents : Mode -> Location -> List (Attribute Msg)
 locationEvents mode location =
     case mode of
         View ->
-            [ onMouseEnter (ShowToolTip Nothing location)
+            [ onMouseEnter (ShowLocationInfo location)
             , onMouseLeave HideToolTip
             ]
 
         Edit _ ->
-            [ onClick (DoEdit (OpenToolTipEditor Nothing (Just location))) ]
+            [ onClickWithPosition (\position -> DoEdit (OpenToolTipEditor (Just location) position)) ]
 
 
 viewShowToolTip : Location -> Html Msg
@@ -648,17 +703,9 @@ viewShowToolTip location =
             ]
 
 
-viewEditToolTip : Editor Location -> Location -> Html Msg
-viewEditToolTip editor loc =
+viewEditToolTip : Location -> Html Msg
+viewEditToolTip location =
     let
-        location =
-            case Editor.current editor of
-                Nothing ->
-                    loc
-
-                Just l ->
-                    l
-
         extension =
             Location.extensionToString location.extension
     in
@@ -668,7 +715,7 @@ viewEditToolTip editor loc =
             , input [ placeholder "Details", value location.details, onInput (\s -> DoEdit (ChangeDetails s)) ] []
             , input [ placeholder "Extension", value extension, onInput (\s -> DoEdit (ChangeExtension s)) ] []
             , div [ class "tooltip-editor-buttons" ]
-                [ button [ onClick (DoEdit SaveToolTipEditor) ] [ text "Save" ]
+                [ button [ onClick (DoEdit (SaveToolTipEditor location)) ] [ text "Save" ]
                 , button [ onClick (DoEdit ReadyToMove) ] [ text "Move" ]
                 , button [ class "delete-button", onClick (DoEdit ReadyToDelete) ] [ text "Delete" ]
                 , button [ onClick (DoEdit CancelToolTipEditor) ] [ text "Cancel" ]
@@ -676,44 +723,30 @@ viewEditToolTip editor loc =
             ]
 
 
-viewDeleteToolTip : Editor Location -> Location -> Html Msg
-viewDeleteToolTip editor loc =
-    let
-        location =
-            case Editor.current editor of
-                Nothing ->
-                    loc
-
-                Just l ->
-                    l
-    in
-        div []
-            [ viewEditToolTip editor location
-            , div []
-                [ p [ class "delete-warning" ] [ text ("Are you sure you want to delete " ++ location.name ++ "?") ]
-                , div [ class "tooltip-editor-buttons" ]
-                    [ button [ class "delete-button", onClick (DoEdit DeleteLocation) ] [ text "Yes" ]
-                    , button [ onClick (DoEdit CancelDelete) ] [ text "Cancel" ]
-                    ]
+viewDeleteToolTip : Location -> Html Msg
+viewDeleteToolTip location =
+    div []
+        [ viewEditToolTip location
+        , div []
+            [ p [ class "delete-warning" ] [ text ("Are you sure you want to delete " ++ location.name ++ "?") ]
+            , div [ class "tooltip-editor-buttons" ]
+                [ button [ class "delete-button", onClick (DoEdit DeleteLocation) ] [ text "Yes" ]
+                , button [ onClick (DoEdit CancelDelete) ] [ text "Cancel" ]
                 ]
             ]
+        ]
 
 
-viewFilterLocations : Model -> Html Msg
-viewFilterLocations model =
+viewFilterPanel : Model -> Html Msg
+viewFilterPanel model =
     let
-        filteredLocations =
-            case model.mode of
-                View ->
-                    model.filteredLocations
-
-                Edit _ ->
-                    Filter.apply model.filters (Editor.retrieve model.editor)
+        locations =
+            Filter.apply model.filters (Editor.list model.editor)
     in
         div [ class "location-filter-wrapper" ]
             [ h1 [ class "location-title" ] [ text "Locations" ]
             , filterForm model.nameInput model.typeSelect
-            , div [ class "location-list" ] <| locationInfoList filteredLocations
+            , div [ class "location-list" ] <| locationInfoList locations
             ]
 
 
@@ -795,7 +828,7 @@ locationInfoList locations =
 -- PORTS
 
 
-port findCoordinates : Mouse.Position -> Cmd msg
+port findCoordinates : Position -> Cmd msg
 
 
 port coordinates : (( Float, Float ) -> msg) -> Sub msg
@@ -810,55 +843,39 @@ subscriptions model =
     case model.mode of
         View ->
             case model.toolTip of
-                Shown pos location ->
-                    case location of
+                Shown pos ->
+                    case pos of
                         Nothing ->
+                            Sub.batch [ Mouse.moves (\x -> ShowToolTip (Just x)) ]
+
+                        Just _ ->
                             Sub.none
 
-                        Just l ->
-                            case pos of
-                                Nothing ->
-                                    Sub.batch [ Mouse.moves (\x -> ShowToolTip (Just x) l) ]
-
-                                Just _ ->
-                                    Sub.none
-
-                Hidden _ _ ->
+                Hidden _ ->
                     Sub.none
 
-        Edit WaitingToMove ->
-            Sub.none
-
-        Edit Move ->
+        Edit Moving ->
             Sub.batch
                 [ Mouse.clicks (\x -> DoEdit (GetNewPosition x))
                 , coordinates (\c -> DoEdit (SetNewPosition c))
                 ]
 
         Edit _ ->
-            case model.toolTip of
-                Shown pos location ->
-                    case pos of
-                        Nothing ->
-                            Sub.batch [ Mouse.clicks (\x -> DoEdit (OpenToolTipEditor (Just x) location)) ]
-
-                        Just _ ->
-                            case location of
-                                Nothing ->
-                                    Sub.batch [ Mouse.clicks (\x -> DoEdit (CancelToolTipEditor)) ]
-
-                                Just l ->
-                                    Sub.batch [ Mouse.clicks (\x -> DoEdit (NoOp)) ]
-
-                Hidden pos location ->
-                    case pos of
-                        Nothing ->
-                            Sub.batch [ Mouse.clicks (\x -> DoEdit (OpenToolTipEditor (Just x) location)) ]
-
-                        Just _ ->
-                            Sub.batch [ Mouse.clicks (\x -> DoEdit (CancelToolTipEditor)) ]
+            Sub.batch
+                [ coordinates (\c -> DoEdit (SetNewPosition c))
+                ]
 
 
+log : Model -> a -> a
+log model a =
+    let
+        t =
+            (Debug.log "toolTip" model.toolTip)
 
--- HTTP
--- DECODER
+        c =
+            (Debug.log "current" (Editor.current model.editor))
+
+        m =
+            (Debug.log "mode" model.mode)
+    in
+        a
