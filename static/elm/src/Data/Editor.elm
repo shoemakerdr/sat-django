@@ -2,7 +2,7 @@ module Data.Editor
     exposing
         ( Editor
         , editor
-        , retrieve
+        , list
         , current
         , edit
         , maybeEdit
@@ -26,8 +26,8 @@ editor list =
     Editor Nothing list
 
 
-retrieve : Editor a -> List a
-retrieve e =
+list : Editor a -> List a
+list e =
     case e of
         Editor _ list ->
             list
