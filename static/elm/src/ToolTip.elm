@@ -17,39 +17,39 @@ import Mouse exposing (Position)
 -- MODEL
 
 
-type ToolTip model
-    = Hidden (Maybe Position) (Maybe model)
-    | Shown (Maybe Position) (Maybe model)
+type ToolTip
+    = Hidden (Maybe Position)
+    | Shown (Maybe Position)
 
 
-show : ToolTip model -> ToolTip model
+show : ToolTip -> ToolTip
 show toolTip =
     case toolTip of
-        Hidden pos model ->
-            Shown pos model
+        Hidden pos ->
+            Shown pos
 
-        Shown _ _ ->
+        Shown _ ->
             toolTip
 
 
-hide : ToolTip model -> ToolTip model
+hide : ToolTip -> ToolTip
 hide toolTip =
     case toolTip of
-        Hidden _ _ ->
+        Hidden _ ->
             toolTip
 
-        Shown pos model ->
-            Hidden pos model
+        Shown pos ->
+            Hidden pos
 
 
-move : Position -> ToolTip model -> ToolTip model
+move : Position -> ToolTip -> ToolTip
 move pos toolTip =
     case toolTip of
-        Hidden _ model ->
-            Hidden (Just pos) model
+        Hidden _ ->
+            Hidden (Just pos)
 
-        Shown _ model ->
-            Shown (Just pos) model
+        Shown _ ->
+            Shown (Just pos)
 
 
 
@@ -73,10 +73,10 @@ config x y classes styles =
     }
 
 
-view : Config -> (model -> Html msg) -> ToolTip model -> Html msg
-view config toHtml toolTip =
+view : Config -> Html msg -> ToolTip -> Html msg
+view config html toolTip =
     case toolTip of
-        Shown (Just pos) (Just model) ->
+        Shown (Just pos) ->
             let
                 styles =
                     ([ "top" => px (pos.y + config.yOffset)
@@ -89,7 +89,7 @@ view config toHtml toolTip =
                     [ class config.wrapperClasses
                     , style styles
                     ]
-                    [ toHtml model ]
+                    [ html ]
 
         _ ->
             div [] []
