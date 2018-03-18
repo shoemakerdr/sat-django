@@ -7,6 +7,7 @@ module Data.Location
         , isNew
         , newId
         , intFromId
+        , nextId
         , typeFromString
         , fromAbbr
         , fromReadable
@@ -38,9 +39,9 @@ type Id
     | Old Int
 
 
-blank : Int -> Int -> Location
+blank : Id -> Int -> Location
 blank id floorplanId =
-    { id = New id
+    { id = id
     , floorplan = floorplanId
     , name = ""
     , loc_type = ""
@@ -89,6 +90,22 @@ intFromId id =
 
         Old i ->
             i
+
+
+nextId : List Location -> Id
+nextId locations =
+    locations
+        |> List.filterMap
+            (\l ->
+                if (not << isNew) l then
+                    Just <| intFromId l.id
+                else
+                    Nothing
+            )
+        |> List.maximum
+        |> Maybe.map ((+) 1)
+        |> Maybe.withDefault 1
+        |> New
 
 
 abbrToReadable : Dict String String
