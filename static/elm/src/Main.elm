@@ -74,6 +74,11 @@ defaultSelect =
     "-- Select type --"
 
 
+isTrashedFilter : Filter FilterType Location
+isTrashedFilter =
+    (Filter.new IsTrashed (not << .is_trashed))
+
+
 type alias Flags =
     { token : String
     , user : String
@@ -103,7 +108,7 @@ init flags =
         , nameInput = ""
         , typeSelect = defaultSelect
         , toolTip = Hidden Nothing
-        , filters = []
+        , filters = [ isTrashedFilter ]
         , floorplanDimensions = Nothing
         , token = flags.token
         , user = flags.user
@@ -143,6 +148,7 @@ type alias Dimensions =
 type FilterType
     = Name
     | Type
+    | IsTrashed
 
 
 type Mode
@@ -203,7 +209,7 @@ type EditMsg
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    case (Debug.log "msg" msg) of
+    case msg of
         NameInputChange name ->
             let
                 filterMsg =
@@ -230,7 +236,7 @@ update msg model =
             { model
                 | nameInput = ""
                 , typeSelect = defaultSelect
-                , filters = []
+                , filters = [ isTrashedFilter ]
             }
                 ! []
 
@@ -453,12 +459,19 @@ update msg model =
 
                 DeleteLocation ->
                     let
+                        editor_ =
+                            Editor.newWithDefault
+                                (\location ->
+                                    Editor.edit { location | is_trashed = True }
+                                )
+                                model.editor
+
                         newEditor =
                             Editor.newWithDefault
                                 (\c ->
-                                    Editor.delete (Location.equal c)
+                                    Editor.update (Location.equal c)
                                 )
-                                model.editor
+                                editor_
                     in
                         { model
                             | mode = Edit Waiting
