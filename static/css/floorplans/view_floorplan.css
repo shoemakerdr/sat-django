@@ -122,3 +122,8 @@
   margin-right: 8px;
 }
 
+.validation-error {
+  margin: 16px 0;
+  text-align: center;
+  color: red;
+}
