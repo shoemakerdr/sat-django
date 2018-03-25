@@ -3,6 +3,7 @@ module Util
         ( (=>)
         , onChange
         , onClickWithPosition
+        , (@)
         )
 
 import Json.Decode as Json exposing (Decoder)
@@ -36,3 +37,9 @@ positionDecoder =
     Json.map2 Position
         (Json.field "pageX" Json.int)
         (Json.field "pageY" Json.int)
+
+
+(@) : String -> a -> a
+(@) message a =
+    Debug.log message a
+infixr 0 @
