@@ -204,7 +204,6 @@ type EditMsg
     | ReadyToDelete
     | DeleteLocation
     | CancelDelete
-    | AddNewLocation
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -482,9 +481,6 @@ update msg model =
 
                 CancelDelete ->
                     { model | mode = Edit Waiting } ! []
-
-                AddNewLocation ->
-                    model ! []
 
 
 getFloorplanDimensions : Size -> FloorPlan -> Dimensions
