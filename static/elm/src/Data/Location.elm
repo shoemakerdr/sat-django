@@ -1,13 +1,9 @@
 module Data.Location
     exposing
         ( Location
-        , Id
-        , blank
+        , new
         , equal
-        , isNew
-        , newId
-        , intFromId
-        , nextId
+        , isValid
         , typeFromString
         , fromAbbr
         , fromReadable
@@ -18,6 +14,7 @@ module Data.Location
 import Json.Decode as Json
 import Json.Decode.Pipeline as Pipeline
 import Dict exposing (Dict)
+import Data.Id as Id exposing (Id)
 
 
 type alias Location =
@@ -34,13 +31,8 @@ type alias Location =
     }
 
 
-type Id
-    = New Int
-    | Old Int
-
-
-blank : Id -> Int -> Location
-blank id floorplanId =
+new : Id -> Int -> Location
+new id floorplanId =
     { id = id
     , floorplan = floorplanId
     , name = ""
@@ -56,56 +48,19 @@ blank id floorplanId =
 
 equal : Location -> Location -> Bool
 equal l1 l2 =
-    case ( .id l1, .id l2 ) of
-        ( New i1, New i2 ) ->
-            i1 == i2
+    let
+        id1 =
+            .id l1
 
-        ( Old i1, Old i2 ) ->
-            i1 == i2
-
-        _ ->
-            False
-
-
-isNew : Location -> Bool
-isNew l =
-    case l.id of
-        New _ ->
-            True
-
-        _ ->
-            False
+        id2 =
+            .id l2
+    in
+        Id.equal id1 id2
 
 
-newId : Int -> Id
-newId i =
-    New i
-
-
-intFromId : Id -> Int
-intFromId id =
-    case id of
-        New i ->
-            i
-
-        Old i ->
-            i
-
-
-nextId : List Location -> Id
-nextId locations =
-    locations
-        |> List.filterMap
-            (\l ->
-                if (not << isNew) l then
-                    Just <| intFromId l.id
-                else
-                    Nothing
-            )
-        |> List.maximum
-        |> Maybe.map ((+) 1)
-        |> Maybe.withDefault 1
-        |> New
+isValid : Location -> Bool
+isValid location =
+    location.name /= ""
 
 
 abbrToReadable : Dict String String
@@ -171,6 +126,7 @@ decodeLocations value =
         Ok locations ->
             locations
 
+        -- probably shouldn't Debug.crash
         Err err ->
             Debug.crash err
 
@@ -198,4 +154,4 @@ locationDecoder =
 idDecoder : Json.Decoder Id
 idDecoder =
     Json.int
-        |> Json.andThen (\i -> Json.succeed (Old i))
+        |> Json.andThen (\i -> Json.succeed (Id.oldId i))
