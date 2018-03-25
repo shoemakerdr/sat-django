@@ -52,11 +52,12 @@ import Window exposing (Size)
 import Task
 import Json.Decode as Json
 import Data.FloorPlan as FloorPlan exposing (FloorPlan)
-import Data.Location as Location exposing (Location, Id)
+import Data.Location as Location exposing (Location)
+import Data.Id as Id exposing (Id)
 import Data.Filter as Filter exposing (Filter)
 import Data.Editor as Editor exposing (Editor)
 import ToolTip as TT exposing (ToolTip(..))
-import Util exposing ((=>), onChange, onClickWithPosition)
+import Util exposing ((=>), onChange, onClickWithPosition, (@))
 
 
 main : Program Flags Model Msg
@@ -163,6 +164,7 @@ type Status
     | PreparingForMove
     | Moving
     | DeleteConfirmation
+    | InvalidLocation
 
 
 type FilterMsg
@@ -191,7 +193,7 @@ type Msg
 type EditMsg
     = NoOp
     | OpenToolTipEditor (Maybe Location) Position
-    | SaveToolTipEditor Location
+    | SaveToolTipEditor
     | CancelToolTipEditor
     | ReadyToMove
     | CanSetMove
@@ -301,186 +303,204 @@ update msg model =
                     ! []
 
         DoEdit editMsg ->
-            case editMsg of
-                NoOp ->
-                    model ! []
+            updateEditor editMsg model
 
-                OpenToolTipEditor location position ->
-                    case Editor.current model.editor of
-                        Nothing ->
-                            let
-                                id =
-                                    Location.nextId model.locations
 
-                                loc =
-                                    Maybe.withDefault (Location.blank id model.floorplan.id) location
+updateEditor : EditMsg -> Model -> ( Model, Cmd Msg )
+updateEditor editMsg model =
+    case editMsg of
+        NoOp ->
+            model ! []
 
-                                newToolTip =
-                                    case location of
-                                        Nothing ->
-                                            Hidden (Just position)
-
-                                        Just _ ->
-                                            Shown (Just position)
-
-                                cmd =
-                                    case location of
-                                        Nothing ->
-                                            findCoordinates position
-
-                                        Just _ ->
-                                            Cmd.none
-
-                                newMode =
-                                    case location of
-                                        Nothing ->
-                                            Edit Adding
-
-                                        Just _ ->
-                                            Edit Editing
-                            in
-                                { model
-                                    | editor = Editor.edit loc model.editor
-                                    , mode = newMode
-                                    , toolTip = newToolTip
-                                }
-                                    ! [ cmd ]
-
-                        Just _ ->
-                            model ! []
-
-                SaveToolTipEditor location ->
+        OpenToolTipEditor location position ->
+            case Editor.current model.editor of
+                Nothing ->
                     let
-                        newEditor =
-                            if Location.isNew location then
-                                Editor.create model.editor
-                            else
-                                Editor.newWithDefault (\c -> Editor.update (Location.equal c)) model.editor
+                        id =
+                            Id.nextId <| Editor.list model.editor
+
+                        loc =
+                            Maybe.withDefault (Location.new id model.floorplan.id) location
+
+                        newToolTip =
+                            case location of
+                                Nothing ->
+                                    Hidden (Just position)
+
+                                Just _ ->
+                                    Shown (Just position)
+
+                        cmd =
+                            case location of
+                                Nothing ->
+                                    findCoordinates position
+
+                                Just _ ->
+                                    Cmd.none
+
+                        newMode =
+                            case location of
+                                Nothing ->
+                                    Edit Adding
+
+                                Just _ ->
+                                    Edit Editing
                     in
                         { model
-                            | toolTip = Hidden Nothing
-                            , editor = newEditor
-                            , mode = Edit Waiting
+                            | editor = Editor.edit loc model.editor
+                            , mode = newMode
+                            , toolTip = newToolTip
                         }
-                            ! []
+                            ! [ cmd ]
 
-                CancelToolTipEditor ->
+                Just _ ->
+                    model ! []
+
+        SaveToolTipEditor ->
+            validateLocationOnSave model
+
+        CancelToolTipEditor ->
+            { model
+                | toolTip = Hidden Nothing
+                , editor = Editor.cancel model.editor
+                , mode = Edit Waiting
+            }
+                ! []
+
+        ReadyToMove ->
+            { model
+                | mode = Edit PreparingForMove
+                , toolTip = TT.hide model.toolTip
+            }
+                ! [ Task.perform (\_ -> DoEdit CanSetMove) (Task.succeed ()) ]
+
+        CanSetMove ->
+            { model | mode = Edit Moving } ! []
+
+        GetNewPosition pos ->
+            { model | toolTip = TT.move pos model.toolTip } ! [ findCoordinates pos ]
+
+        SetNewPosition ( x, y ) ->
+            let
+                newEditor =
+                    Editor.newWithDefault
+                        (\location ->
+                            Editor.edit { location | position_x = x, position_y = y }
+                        )
+                        model.editor
+            in
+                { model
+                    | editor = newEditor
+                    , toolTip = TT.show model.toolTip
+                    , mode = Edit Editing
+                }
+                    ! []
+
+        ChangeName name ->
+            let
+                newEditor =
+                    Editor.newWithDefault
+                        (\location ->
+                            Editor.edit { location | name = name }
+                        )
+                        model.editor
+            in
+                { model | editor = newEditor } ! []
+
+        ChangeType loc_type ->
+            let
+                newEditor =
+                    Editor.newWithDefault
+                        (\location ->
+                            Editor.edit { location | loc_type = Location.fromReadable loc_type }
+                        )
+                        model.editor
+            in
+                { model | editor = newEditor } ! []
+
+        ChangeDetails details ->
+            let
+                newEditor =
+                    Editor.newWithDefault
+                        (\location ->
+                            Editor.edit { location | details = details }
+                        )
+                        model.editor
+            in
+                { model | editor = newEditor } ! []
+
+        ChangeExtension extension ->
+            let
+                ext =
+                    case String.toInt extension of
+                        Ok x ->
+                            Just x
+
+                        Err _ ->
+                            Nothing
+
+                newEditor =
+                    Editor.newWithDefault
+                        (\location ->
+                            Editor.edit { location | extension = ext }
+                        )
+                        model.editor
+            in
+                { model | editor = newEditor } ! []
+
+        ReadyToDelete ->
+            { model | mode = Edit DeleteConfirmation } ! []
+
+        DeleteLocation ->
+            let
+                editor_ =
+                    Editor.newWithDefault
+                        (\location ->
+                            Editor.edit { location | is_trashed = True }
+                        )
+                        model.editor
+
+                newEditor =
+                    Editor.newWithDefault
+                        (\c ->
+                            Editor.update (Location.equal c)
+                        )
+                        editor_
+            in
+                { model
+                    | mode = Edit Waiting
+                    , editor = newEditor
+                    , toolTip = Hidden Nothing
+                }
+                    ! []
+
+        CancelDelete ->
+            { model | mode = Edit Waiting } ! []
+
+
+validateLocationOnSave : Model -> ( Model, Cmd Msg )
+validateLocationOnSave model =
+    case Editor.current model.editor of
+        Nothing ->
+            model ! []
+
+        Just c ->
+            if Location.isValid c then
+                let
+                    newEditor =
+                        if Editor.isSaved Location.equal model.editor then
+                            Editor.create model.editor
+                        else
+                            Editor.newWithDefault (\c -> Editor.update (Location.equal c)) model.editor
+                in
                     { model
                         | toolTip = Hidden Nothing
-                        , editor = Editor.cancel model.editor
+                        , editor = newEditor
                         , mode = Edit Waiting
                     }
                         ! []
-
-                ReadyToMove ->
-                    { model
-                        | mode = Edit PreparingForMove
-                        , toolTip = TT.hide model.toolTip
-                    }
-                        ! [ Task.perform (\_ -> DoEdit CanSetMove) (Task.succeed ()) ]
-
-                CanSetMove ->
-                    { model | mode = Edit Moving } ! []
-
-                GetNewPosition pos ->
-                    { model | toolTip = TT.move pos model.toolTip } ! [ findCoordinates pos ]
-
-                SetNewPosition ( x, y ) ->
-                    let
-                        newEditor =
-                            Editor.newWithDefault
-                                (\location ->
-                                    Editor.edit { location | position_x = x, position_y = y }
-                                )
-                                model.editor
-                    in
-                        { model
-                            | editor = newEditor
-                            , toolTip = TT.show model.toolTip
-                            , mode = Edit Editing
-                        }
-                            ! []
-
-                ChangeName name ->
-                    let
-                        newEditor =
-                            Editor.newWithDefault
-                                (\location ->
-                                    Editor.edit { location | name = name }
-                                )
-                                model.editor
-                    in
-                        { model | editor = newEditor } ! []
-
-                ChangeType loc_type ->
-                    let
-                        newEditor =
-                            Editor.newWithDefault
-                                (\location ->
-                                    Editor.edit { location | loc_type = Location.fromReadable loc_type }
-                                )
-                                model.editor
-                    in
-                        { model | editor = newEditor } ! []
-
-                ChangeDetails details ->
-                    let
-                        newEditor =
-                            Editor.newWithDefault
-                                (\location ->
-                                    Editor.edit { location | details = details }
-                                )
-                                model.editor
-                    in
-                        { model | editor = newEditor } ! []
-
-                ChangeExtension extension ->
-                    let
-                        ext =
-                            case String.toInt extension of
-                                Ok x ->
-                                    Just x
-
-                                Err _ ->
-                                    Nothing
-
-                        newEditor =
-                            Editor.newWithDefault
-                                (\location ->
-                                    Editor.edit { location | extension = ext }
-                                )
-                                model.editor
-                    in
-                        { model | editor = newEditor } ! []
-
-                ReadyToDelete ->
-                    { model | mode = Edit DeleteConfirmation } ! []
-
-                DeleteLocation ->
-                    let
-                        editor_ =
-                            Editor.newWithDefault
-                                (\location ->
-                                    Editor.edit { location | is_trashed = True }
-                                )
-                                model.editor
-
-                        newEditor =
-                            Editor.newWithDefault
-                                (\c ->
-                                    Editor.update (Location.equal c)
-                                )
-                                editor_
-                    in
-                        { model
-                            | mode = Edit Waiting
-                            , editor = newEditor
-                            , toolTip = Hidden Nothing
-                        }
-                            ! []
-
-                CancelDelete ->
-                    { model | mode = Edit Waiting } ! []
+            else
+                { model | mode = Edit InvalidLocation } ! []
 
 
 getFloorplanDimensions : Size -> FloorPlan -> Dimensions
@@ -541,6 +561,9 @@ view model =
 
                         Edit DeleteConfirmation ->
                             viewDeleteToolTip location
+
+                        Edit InvalidLocation ->
+                            viewValidationToolTip location
 
                         Edit _ ->
                             viewEditToolTip location
@@ -724,7 +747,7 @@ viewEditToolTip location =
             , input [ placeholder "Details", value location.details, onInput (\s -> DoEdit (ChangeDetails s)) ] []
             , input [ placeholder "Extension", value extension, onInput (\s -> DoEdit (ChangeExtension s)) ] []
             , div [ class "tooltip-editor-buttons" ]
-                [ button [ onClick (DoEdit (SaveToolTipEditor location)) ] [ text "Save" ]
+                [ button [ onClick (DoEdit SaveToolTipEditor) ] [ text "Save" ]
                 , button [ onClick (DoEdit ReadyToMove) ] [ text "Move" ]
                 , button [ class "delete-button", onClick (DoEdit ReadyToDelete) ] [ text "Delete" ]
                 , button [ onClick (DoEdit CancelToolTipEditor) ] [ text "Cancel" ]
@@ -743,6 +766,14 @@ viewDeleteToolTip location =
                 , button [ onClick (DoEdit CancelDelete) ] [ text "Cancel" ]
                 ]
             ]
+        ]
+
+
+viewValidationToolTip : Location -> Html Msg
+viewValidationToolTip location =
+    div []
+        [ viewEditToolTip location
+        , div [ class "validation-error" ] [ text "Location must be have a name." ]
         ]
 
 
@@ -873,18 +904,3 @@ subscriptions model =
             Sub.batch
                 [ coordinates (\c -> DoEdit (SetNewPosition c))
                 ]
-
-
-log : Model -> a -> a
-log model a =
-    let
-        t =
-            (Debug.log "toolTip" model.toolTip)
-
-        c =
-            (Debug.log "current" (Editor.current model.editor))
-
-        m =
-            (Debug.log "mode" model.mode)
-    in
-        a
