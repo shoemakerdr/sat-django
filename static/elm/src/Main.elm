@@ -188,7 +188,7 @@ type Msg
     | ShowToolTip (Maybe Position)
     | HideToolTip
     | ResizeFloorplan Size
-    | OpenEdit
+    | BeginEdit
     | CancelEdit
     | SaveEdit
     | DoEdit EditMsg
@@ -286,7 +286,7 @@ update msg model =
         ResizeFloorplan size ->
             { model | floorplanDimensions = Just <| getFloorplanDimensions size model.floorplan } ! []
 
-        OpenEdit ->
+        BeginEdit ->
             { model | mode = Edit Waiting } ! []
 
         CancelEdit ->
@@ -645,7 +645,7 @@ viewEditorPanel { mode } =
     case mode of
         View ->
             [ div [ class "editor-panel" ]
-                [ button [ onClick OpenEdit ] [ text "Edit Floor Plan" ]
+                [ button [ onClick BeginEdit ] [ text "Edit Floor Plan" ]
                 , div [] []
                 ]
             ]
