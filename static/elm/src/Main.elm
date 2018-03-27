@@ -48,6 +48,7 @@ import Svg.Attributes as SvgAttr
         , fillOpacity
         )
 import Mouse exposing (Position)
+import Keyboard
 import Window exposing (Size)
 import Task
 import Json.Decode as Json
@@ -106,8 +107,9 @@ init flags =
     in
         { floorplan = FloorPlan.floorplan flags.floorplan
         , locations = locations
-        , nameInput = ""
-        , typeSelect = defaultSelect
+        , floorplanNameInput = flags.floorplan.name
+        , filterNameInput = ""
+        , filterTypeSelect = defaultSelect
         , toolTip = Hidden Nothing
         , filters = [ isTrashedFilter ]
         , floorplanDimensions = Nothing
@@ -127,8 +129,9 @@ init flags =
 type alias Model =
     { floorplan : FloorPlan
     , locations : List Location
-    , nameInput : String
-    , typeSelect : String
+    , floorplanNameInput : String
+    , filterNameInput : String
+    , filterTypeSelect : String
     , toolTip : ToolTip
     , filters : List (Filter FilterType Location)
     , floorplanDimensions : Maybe Dimensions
@@ -160,6 +163,7 @@ type Mode
 type Status
     = Waiting
     | Adding
+    | FloorPlanName
     | Editing
     | PreparingForMove
     | Moving
@@ -192,6 +196,10 @@ type Msg
 
 type EditMsg
     = NoOp
+    | EditFloorPlanName
+    | ChangeFloorPlanName String
+    | SaveFloorPlanName
+    | CancelFloorPlanName
     | OpenToolTipEditor (Maybe Location) Position
     | SaveToolTipEditor
     | CancelToolTipEditor
@@ -221,7 +229,7 @@ update msg model =
                         _ ->
                             Merge
             in
-                updateFilter filterMsg (Filter.new Name (filterByName name)) { model | nameInput = name }
+                updateFilter filterMsg (Filter.new Name (filterByName name)) { model | filterNameInput = name }
 
         TypeSelectChange locationType ->
             let
@@ -231,12 +239,12 @@ update msg model =
                     else
                         Merge
             in
-                updateFilter filterMsg (Filter.new Type (filterByType locationType)) { model | typeSelect = locationType }
+                updateFilter filterMsg (Filter.new Type (filterByType locationType)) { model | filterTypeSelect = locationType }
 
         ResetFilterForm ->
             { model
-                | nameInput = ""
-                , typeSelect = defaultSelect
+                | filterNameInput = ""
+                , filterTypeSelect = defaultSelect
                 , filters = [ isTrashedFilter ]
             }
                 ! []
@@ -293,9 +301,16 @@ update msg model =
             let
                 newLocations =
                     Editor.list model.editor
+
+                { floorplan } =
+                    model
+
+                newFloorplan =
+                    { floorplan | name = model.floorplanNameInput }
             in
                 { model
                     | locations = newLocations
+                    , floorplan = newFloorplan
                     , toolTip = Hidden Nothing
                     , mode = View
                     , editor = Editor.editor newLocations
@@ -311,6 +326,27 @@ updateEditor editMsg model =
     case editMsg of
         NoOp ->
             model ! []
+
+        EditFloorPlanName ->
+            { model | mode = Edit FloorPlanName } ! []
+
+        ChangeFloorPlanName name ->
+            { model | floorplanNameInput = name } ! []
+
+        SaveFloorPlanName ->
+            let
+                { floorplan } =
+                    model
+            in
+                { model
+                    | mode = Edit Waiting
+
+                    -- , floorplan = { floorplan | name = model.floorplanNameInput }
+                }
+                    ! []
+
+        CancelFloorPlanName ->
+            { model | mode = Edit Waiting } ! []
 
         OpenToolTipEditor location position ->
             case Editor.current model.editor of
@@ -572,9 +608,7 @@ view model =
             TT.config 10 10 "tooltip-wrapper" []
     in
         div []
-            [ h1
-                [ class "floorplan-name" ]
-                [ text model.floorplan.name ]
+            [ editableFloorPlanName model
             , div [] <|
                 if model.isOwner then
                     viewEditorPanel model
@@ -587,6 +621,23 @@ view model =
                 ]
             , TT.view config (toolTipView) model.toolTip
             ]
+
+
+editableFloorPlanName : Model -> Html Msg
+editableFloorPlanName model =
+    case model.mode of
+        Edit FloorPlanName ->
+            input [ class "floorplan-name-editing", onInput (\name -> DoEdit (ChangeFloorPlanName name)), value model.floorplanNameInput ] []
+
+        Edit _ ->
+            h1
+                [ class "floorplan-name", onClick (DoEdit EditFloorPlanName) ]
+                [ text model.floorplanNameInput ]
+
+        _ ->
+            h1
+                [ class "floorplan-name" ]
+                [ text model.floorplan.name ]
 
 
 viewEditorPanel : Model -> List (Html Msg)
@@ -785,7 +836,7 @@ viewFilterPanel model =
     in
         div [ class "location-filter-wrapper" ]
             [ h1 [ class "location-title" ] [ text "Locations" ]
-            , filterForm model.nameInput model.typeSelect
+            , filterForm model.filterNameInput model.filterTypeSelect
             , div [ class "location-list" ] <| locationInfoList locations
             ]
 
@@ -898,6 +949,22 @@ subscriptions model =
             Sub.batch
                 [ Mouse.clicks (\x -> DoEdit (GetNewPosition x))
                 , coordinates (\c -> DoEdit (SetNewPosition c))
+                ]
+
+        Edit FloorPlanName ->
+            Sub.batch
+                [ Keyboard.ups
+                    (\keyCode ->
+                        case keyCode of
+                            13 ->
+                                DoEdit SaveFloorPlanName
+
+                            27 ->
+                                DoEdit CancelFloorPlanName
+
+                            _ ->
+                                DoEdit NoOp
+                    )
                 ]
 
         Edit _ ->
