@@ -56,7 +56,8 @@ import Data.FloorPlan as FloorPlan exposing (FloorPlan)
 import Data.Location as Location exposing (Location)
 import Data.Id as Id exposing (Id)
 import Data.Filter as Filter exposing (Filter)
-import Data.Editor as Editor exposing (Editor)
+import Data.Editor.List as LEditor
+import Data.Editor.String as SEditor
 import ToolTip as TT exposing (ToolTip(..))
 import Util exposing ((=>), onChange, onClickWithPosition, (@))
 
@@ -107,7 +108,6 @@ init flags =
     in
         { floorplan = FloorPlan.floorplan flags.floorplan
         , locations = locations
-        , floorplanNameInput = flags.floorplan.name
         , filterNameInput = ""
         , filterTypeSelect = defaultSelect
         , toolTip = Hidden Nothing
@@ -117,7 +117,8 @@ init flags =
         , user = flags.user
         , isOwner = flags.user == flags.floorplan.owner_name
         , mode = View
-        , editor = Editor.editor locations
+        , locationEditor = LEditor.editor locations
+        , floorplanEditor = SEditor.editor flags.floorplan.name
         }
             ! [ Task.perform ResizeFloorplan Window.size ]
 
@@ -129,7 +130,6 @@ init flags =
 type alias Model =
     { floorplan : FloorPlan
     , locations : List Location
-    , floorplanNameInput : String
     , filterNameInput : String
     , filterTypeSelect : String
     , toolTip : ToolTip
@@ -139,7 +139,8 @@ type alias Model =
     , user : String
     , isOwner : Bool
     , mode : Mode
-    , editor : Editor Location
+    , locationEditor : LEditor.Editor Location
+    , floorplanEditor : SEditor.Editor
     }
 
 
@@ -252,10 +253,10 @@ update msg model =
         ShowLocationInfo location ->
             let
                 newEditor =
-                    Editor.edit location model.editor
+                    LEditor.edit location model.locationEditor
             in
                 { model
-                    | editor = newEditor
+                    | locationEditor = newEditor
                     , toolTip = Shown Nothing
                 }
                     ! []
@@ -279,7 +280,7 @@ update msg model =
         HideToolTip ->
             { model
                 | toolTip = Hidden Nothing
-                , editor = Editor.cancel model.editor
+                , locationEditor = LEditor.cancel model.locationEditor
             }
                 ! []
 
@@ -293,27 +294,28 @@ update msg model =
             { model
                 | mode = View
                 , toolTip = Hidden Nothing
-                , editor = Editor.editor model.locations
+                , locationEditor = LEditor.editor model.locations
+                , floorplanEditor = SEditor.editor model.floorplan.name
             }
                 ! []
 
         SaveEdit ->
             let
                 newLocations =
-                    Editor.list model.editor
+                    LEditor.list model.locationEditor
 
                 { floorplan } =
                     model
 
                 newFloorplan =
-                    { floorplan | name = model.floorplanNameInput }
+                    { floorplan | name = SEditor.saved model.floorplanEditor }
             in
                 { model
                     | locations = newLocations
                     , floorplan = newFloorplan
                     , toolTip = Hidden Nothing
                     , mode = View
-                    , editor = Editor.editor newLocations
+                    , locationEditor = LEditor.editor newLocations
                 }
                     ! []
 
@@ -331,29 +333,28 @@ updateEditor editMsg model =
             { model | mode = Edit FloorPlanName } ! []
 
         ChangeFloorPlanName name ->
-            { model | floorplanNameInput = name } ! []
+            { model | floorplanEditor = SEditor.edit name model.floorplanEditor } ! []
 
         SaveFloorPlanName ->
-            let
-                { floorplan } =
-                    model
-            in
-                { model
-                    | mode = Edit Waiting
-
-                    -- , floorplan = { floorplan | name = model.floorplanNameInput }
-                }
-                    ! []
+            { model
+                | mode = Edit Waiting
+                , floorplanEditor = SEditor.update model.floorplanEditor
+            }
+                ! []
 
         CancelFloorPlanName ->
-            { model | mode = Edit Waiting } ! []
+            { model
+                | mode = Edit Waiting
+                , floorplanEditor = SEditor.cancel model.floorplanEditor
+            }
+                ! []
 
         OpenToolTipEditor location position ->
-            case Editor.current model.editor of
+            case LEditor.current model.locationEditor of
                 Nothing ->
                     let
                         id =
-                            Id.nextId <| Editor.list model.editor
+                            Id.nextId <| LEditor.list model.locationEditor
 
                         loc =
                             Maybe.withDefault (Location.new id model.floorplan.id) location
@@ -383,7 +384,7 @@ updateEditor editMsg model =
                                     Edit Editing
                     in
                         { model
-                            | editor = Editor.edit loc model.editor
+                            | locationEditor = LEditor.edit loc model.locationEditor
                             , mode = newMode
                             , toolTip = newToolTip
                         }
@@ -398,7 +399,7 @@ updateEditor editMsg model =
         CancelToolTipEditor ->
             { model
                 | toolTip = Hidden Nothing
-                , editor = Editor.cancel model.editor
+                , locationEditor = LEditor.cancel model.locationEditor
                 , mode = Edit Waiting
             }
                 ! []
@@ -419,14 +420,14 @@ updateEditor editMsg model =
         SetNewPosition ( x, y ) ->
             let
                 newEditor =
-                    Editor.newWithDefault
+                    LEditor.newWithDefault
                         (\location ->
-                            Editor.edit { location | position_x = x, position_y = y }
+                            LEditor.edit { location | position_x = x, position_y = y }
                         )
-                        model.editor
+                        model.locationEditor
             in
                 { model
-                    | editor = newEditor
+                    | locationEditor = newEditor
                     , toolTip = TT.show model.toolTip
                     , mode = Edit Editing
                 }
@@ -435,35 +436,35 @@ updateEditor editMsg model =
         ChangeName name ->
             let
                 newEditor =
-                    Editor.newWithDefault
+                    LEditor.newWithDefault
                         (\location ->
-                            Editor.edit { location | name = name }
+                            LEditor.edit { location | name = name }
                         )
-                        model.editor
+                        model.locationEditor
             in
-                { model | editor = newEditor } ! []
+                { model | locationEditor = newEditor } ! []
 
         ChangeType loc_type ->
             let
                 newEditor =
-                    Editor.newWithDefault
+                    LEditor.newWithDefault
                         (\location ->
-                            Editor.edit { location | loc_type = Location.fromReadable loc_type }
+                            LEditor.edit { location | loc_type = Location.fromReadable loc_type }
                         )
-                        model.editor
+                        model.locationEditor
             in
-                { model | editor = newEditor } ! []
+                { model | locationEditor = newEditor } ! []
 
         ChangeDetails details ->
             let
                 newEditor =
-                    Editor.newWithDefault
+                    LEditor.newWithDefault
                         (\location ->
-                            Editor.edit { location | details = details }
+                            LEditor.edit { location | details = details }
                         )
-                        model.editor
+                        model.locationEditor
             in
-                { model | editor = newEditor } ! []
+                { model | locationEditor = newEditor } ! []
 
         ChangeExtension extension ->
             let
@@ -476,13 +477,13 @@ updateEditor editMsg model =
                             Nothing
 
                 newEditor =
-                    Editor.newWithDefault
+                    LEditor.newWithDefault
                         (\location ->
-                            Editor.edit { location | extension = ext }
+                            LEditor.edit { location | extension = ext }
                         )
-                        model.editor
+                        model.locationEditor
             in
-                { model | editor = newEditor } ! []
+                { model | locationEditor = newEditor } ! []
 
         ReadyToDelete ->
             { model | mode = Edit DeleteConfirmation } ! []
@@ -490,22 +491,22 @@ updateEditor editMsg model =
         DeleteLocation ->
             let
                 editor_ =
-                    Editor.newWithDefault
+                    LEditor.newWithDefault
                         (\location ->
-                            Editor.edit { location | is_trashed = True }
+                            LEditor.edit { location | is_trashed = True }
                         )
-                        model.editor
+                        model.locationEditor
 
                 newEditor =
-                    Editor.newWithDefault
+                    LEditor.newWithDefault
                         (\c ->
-                            Editor.update (Location.equal c)
+                            LEditor.update (Location.equal c)
                         )
                         editor_
             in
                 { model
                     | mode = Edit Waiting
-                    , editor = newEditor
+                    , locationEditor = newEditor
                     , toolTip = Hidden Nothing
                 }
                     ! []
@@ -516,7 +517,7 @@ updateEditor editMsg model =
 
 validateLocationOnSave : Model -> ( Model, Cmd Msg )
 validateLocationOnSave model =
-    case Editor.current model.editor of
+    case LEditor.current model.locationEditor of
         Nothing ->
             model ! []
 
@@ -524,14 +525,14 @@ validateLocationOnSave model =
             if Location.isValid c then
                 let
                     newEditor =
-                        if Editor.isSaved Location.equal model.editor then
-                            Editor.create model.editor
+                        if LEditor.isSaved Location.equal model.locationEditor then
+                            LEditor.create model.locationEditor
                         else
-                            Editor.newWithDefault (\c -> Editor.update (Location.equal c)) model.editor
+                            LEditor.newWithDefault (\c -> LEditor.update (Location.equal c)) model.locationEditor
                 in
                     { model
                         | toolTip = Hidden Nothing
-                        , editor = newEditor
+                        , locationEditor = newEditor
                         , mode = Edit Waiting
                     }
                         ! []
@@ -586,7 +587,7 @@ view : Model -> Html Msg
 view model =
     let
         toolTipView =
-            case Editor.current model.editor of
+            case LEditor.current model.locationEditor of
                 Nothing ->
                     div [] []
 
@@ -627,12 +628,12 @@ editableFloorPlanName : Model -> Html Msg
 editableFloorPlanName model =
     case model.mode of
         Edit FloorPlanName ->
-            input [ class "floorplan-name-editing", onInput (\name -> DoEdit (ChangeFloorPlanName name)), value model.floorplanNameInput ] []
+            input [ class "floorplan-name-editing", onInput (\name -> DoEdit (ChangeFloorPlanName name)), value (SEditor.current model.floorplanEditor) ] []
 
         Edit _ ->
             h1
                 [ class "floorplan-name", onClick (DoEdit EditFloorPlanName) ]
-                [ text model.floorplanNameInput ]
+                [ text (SEditor.saved model.floorplanEditor) ]
 
         _ ->
             h1
@@ -697,7 +698,7 @@ plotLocations : Dimensions -> Model -> List (Html Msg)
 plotLocations dimensions model =
     let
         filteredLocations =
-            Filter.apply model.filters (Editor.list model.editor)
+            Filter.apply model.filters (LEditor.list model.locationEditor)
 
         locations =
             case model.mode of
@@ -705,7 +706,7 @@ plotLocations dimensions model =
                     filteredLocations
 
                 Edit _ ->
-                    case Editor.current model.editor of
+                    case LEditor.current model.locationEditor of
                         Nothing ->
                             filteredLocations
 
@@ -718,7 +719,7 @@ plotLocations dimensions model =
                     [ circle [ SvgAttr.visibility "collapse" ] [] ]
 
                 Edit _ ->
-                    Editor.current model.editor
+                    LEditor.current model.locationEditor
                         |> Maybe.map
                             (\location ->
                                 [ viewCircle "#FF0000" "editing-location-point" model.mode dimensions location ]
@@ -832,7 +833,7 @@ viewFilterPanel : Model -> Html Msg
 viewFilterPanel model =
     let
         locations =
-            Filter.apply model.filters (Editor.list model.editor)
+            Filter.apply model.filters (LEditor.list model.locationEditor)
     in
         div [ class "location-filter-wrapper" ]
             [ h1 [ class "location-title" ] [ text "Locations" ]
