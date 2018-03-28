@@ -2,7 +2,7 @@ from rest_framework import serializers
 from floorplans.models import User, FloorPlan, Location
 
 
-class LocationsByFloorPlanListSerializer(serializers.ListSerializer):
+class LocationUpdateListSerializer(serializers.ListSerializer):
     def update(self, instances, validated_data):
         # Maps for id->location instance and id->data item.
         location_mapping = {location.id: location for location in instances}
@@ -17,12 +17,12 @@ class LocationsByFloorPlanListSerializer(serializers.ListSerializer):
         return ret
 
 
-class LocationsByFloorPlanSerializer(serializers.ModelSerializer):
+class LocationUpdateSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField()
 
     class Meta:
         model = Location
-        list_serializer_class = LocationsByFloorPlanListSerializer
+        list_serializer_class = LocationUpdateListSerializer
         fields = (
             'id',
             'name',
@@ -36,7 +36,7 @@ class LocationsByFloorPlanSerializer(serializers.ModelSerializer):
             'last_updated'
         )
 
-class LocationListSerializer(serializers.ListSerializer):
+class LocationCreateListSerializer(serializers.ListSerializer):
     def create(self, validated_data):
         ret = []
         for location in validated_data:
@@ -45,10 +45,10 @@ class LocationListSerializer(serializers.ListSerializer):
         return ret
 
 
-class LocationSerializer(serializers.ModelSerializer):
+class LocationCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Location
-        list_serializer_class = LocationListSerializer
+        list_serializer_class = LocationCreateListSerializer
         fields = (
             'id',
             'name',
@@ -64,8 +64,8 @@ class LocationSerializer(serializers.ModelSerializer):
 
 
 class FloorPlanSerializer(serializers.ModelSerializer):
-    locations = LocationSerializer(many=True, read_only=True)
-    image = serializers.ImageField(required=False)
+    locations = LocationCreateSerializer(many=True, read_only=True)
+    image = serializers.ImageField(read_only=True, required=False)
     aspect_ratio = serializers.SerializerMethodField()
     owner_name = serializers.SerializerMethodField()
 
