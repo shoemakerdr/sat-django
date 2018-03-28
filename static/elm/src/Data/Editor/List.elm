@@ -1,4 +1,4 @@
-module Data.Editor
+module Data.Editor.List
     exposing
         ( Editor
         , editor
