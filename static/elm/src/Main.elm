@@ -632,7 +632,7 @@ editableFloorPlanName model =
 
         Edit _ ->
             h1
-                [ class "floorplan-name", onClick (DoEdit EditFloorPlanName) ]
+                [ class "floorplan-name-editable", onClick (DoEdit EditFloorPlanName) ]
                 [ text (SEditor.saved model.floorplanEditor) ]
 
         _ ->
