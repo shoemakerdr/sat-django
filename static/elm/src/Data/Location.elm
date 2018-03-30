@@ -9,12 +9,15 @@ module Data.Location
         , fromReadable
         , extensionToString
         , decodeLocations
+        , encodeLocations
         )
 
-import Json.Decode as Json
+import Json.Decode as JD
+import Json.Encode as JE
 import Json.Decode.Pipeline as Pipeline
 import Dict exposing (Dict)
-import Data.Id as Id exposing (Id)
+import Util exposing ((=>))
+import Data.Id as Id exposing (Id(..))
 
 
 type alias Location =
@@ -120,9 +123,20 @@ fromReadable loc =
     typeFromString loc readableToAbbr
 
 
-decodeLocations : Json.Value -> List Location
+
+-- DECODERS
+----
+-- This will replace the other decodeLocations that returns List Location
+--     Need to figure out how to approach model
+----
+-- decodeLocations : JD.Value -> Result String (List Location)
+-- decodeLocations value =
+-- JD.decodeValue locationsDecoder value
+
+
+decodeLocations : JD.Value -> List Location
 decodeLocations value =
-    case Json.decodeValue locationsDecoder value of
+    case JD.decodeValue locationsDecoder value of
         Ok locations ->
             locations
 
@@ -131,27 +145,71 @@ decodeLocations value =
             Debug.crash err
 
 
-locationsDecoder : Json.Decoder (List Location)
+locationsDecoder : JD.Decoder (List Location)
 locationsDecoder =
-    Json.list locationDecoder
+    JD.list locationDecoder
 
 
-locationDecoder : Json.Decoder Location
+locationDecoder : JD.Decoder Location
 locationDecoder =
     Pipeline.decode Location
         |> Pipeline.required "id" idDecoder
-        |> Pipeline.required "floorplan" Json.int
-        |> Pipeline.required "name" Json.string
-        |> Pipeline.required "loc_type" Json.string
-        |> Pipeline.required "details" Json.string
-        |> Pipeline.required "extension" (Json.nullable Json.int)
-        |> Pipeline.required "is_trashed" Json.bool
-        |> Pipeline.required "position_x" Json.float
-        |> Pipeline.required "position_y" Json.float
-        |> Pipeline.required "last_updated" Json.string
+        |> Pipeline.required "floorplan" JD.int
+        |> Pipeline.required "name" JD.string
+        |> Pipeline.required "loc_type" JD.string
+        |> Pipeline.required "details" JD.string
+        |> Pipeline.required "extension" (JD.nullable JD.int)
+        |> Pipeline.required "is_trashed" JD.bool
+        |> Pipeline.required "position_x" JD.float
+        |> Pipeline.required "position_y" JD.float
+        |> Pipeline.required "last_updated" JD.string
 
 
-idDecoder : Json.Decoder Id
+idDecoder : JD.Decoder Id
 idDecoder =
-    Json.int
-        |> Json.andThen (\i -> Json.succeed (Id.oldId i))
+    JD.int
+        |> JD.andThen (\i -> JD.succeed (Id.oldId i))
+
+
+
+-- ENCODERS
+
+
+encodeLocations : List Location -> JE.Value
+encodeLocations locations =
+    JE.list <|
+        List.map encodeLocation locations
+
+
+encodeLocation : Location -> JE.Value
+encodeLocation location =
+    let
+        idField =
+            case location.id of
+                New _ ->
+                    []
+
+                Old i ->
+                    [ "id" => JE.int i ]
+    in
+        JE.object <|
+            idField
+                ++ [ "name" => JE.string location.name
+                   , "floorplan" => JE.int location.floorplan
+                   , "loc_type" => JE.string location.loc_type
+                   , "details" => JE.string location.details
+                   , "extension" => encodeMaybeWith JE.int location.extension
+                   , "position_x" => JE.float location.position_x
+                   , "position_y" => JE.float location.position_y
+                   , "is_trashed" => JE.bool location.is_trashed
+                   ]
+
+
+encodeMaybeWith : (a -> JE.Value) -> Maybe a -> JE.Value
+encodeMaybeWith encoder val =
+    case val of
+        Nothing ->
+            JE.null
+
+        Just v ->
+            encoder v
