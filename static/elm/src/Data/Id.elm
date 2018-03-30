@@ -1,6 +1,6 @@
 module Data.Id
     exposing
-        ( Id
+        ( Id(..)
         , WithId
         , newId
         , oldId
