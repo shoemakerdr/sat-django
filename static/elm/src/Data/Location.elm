@@ -8,6 +8,7 @@ module Data.Location
         , fromAbbr
         , fromReadable
         , extensionToString
+        , noSelection
         , decodeLocations
         , encodeLocations
         )
@@ -121,6 +122,11 @@ fromAbbr loc =
 fromReadable : String -> String
 fromReadable loc =
     typeFromString loc readableToAbbr
+
+
+noSelection : String
+noSelection =
+    "-- Select type --"
 
 
 

@@ -57,11 +57,6 @@ main =
         }
 
 
-defaultSelect : String
-defaultSelect =
-    "-- Select type --"
-
-
 isTrashedFilter : Filter FilterType Location
 isTrashedFilter =
     (Filter.new IsTrashed (not << .is_trashed))
@@ -100,7 +95,7 @@ init flags =
         { floorplan = FloorPlan.floorplan flags.floorplan
         , locations = locations
         , filterNameInput = ""
-        , filterTypeSelect = defaultSelect
+        , filterTypeSelect = Location.noSelection
         , toolTip = Hidden Nothing
         , filters = [ isTrashedFilter ]
         , floorplanDimensions = Nothing
@@ -203,7 +198,7 @@ update msg model =
         TypeSelectChange locationType ->
             let
                 filterMsg =
-                    if locationType == defaultSelect then
+                    if locationType == Location.noSelection then
                         Remove
                     else
                         Merge
@@ -213,7 +208,7 @@ update msg model =
         ResetFilterForm ->
             { model
                 | filterNameInput = ""
-                , filterTypeSelect = defaultSelect
+                , filterTypeSelect = Location.noSelection
                 , filters = [ isTrashedFilter ]
             }
                 ! []
@@ -750,8 +745,8 @@ optionList typeSelected hasInitialOption =
         initialOption =
             if hasInitialOption then
                 option
-                    [ selected <| isTypeSelected typeSelected defaultSelect ]
-                    [ text defaultSelect ]
+                    [ selected <| isTypeSelected typeSelected Location.noSelection ]
+                    [ text Location.noSelection ]
                     :: []
             else
                 []
