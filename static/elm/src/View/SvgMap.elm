@@ -30,7 +30,7 @@ type alias Model m t =
 
 
 view : Events msg -> Model m t -> Html msg
-view events model =
+view { mapEvents, locationEvents } model =
     case model.floorplanDimensions of
         Nothing ->
             div [] []
@@ -47,10 +47,10 @@ view events model =
                         , "backgroundRepeat" => "no-repeat"
                         ]
                      ]
-                        ++ events.mapEvents
+                        ++ mapEvents
                     )
                   <|
-                    plotLocations events.locationEvents dims model
+                    plotLocations locationEvents dims model
                 ]
 
 
