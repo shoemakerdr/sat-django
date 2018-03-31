@@ -89,7 +89,13 @@ init : Flags -> ( Model, Cmd Msg )
 init flags =
     let
         locations =
-            Location.decodeLocations flags.floorplan.locations
+            case Location.decodeLocations flags.floorplan.locations of
+                Ok l ->
+                    l
+
+                -- TODO: Handle this error case
+                Err _ ->
+                    []
     in
         { floorplan = FloorPlan.floorplan flags.floorplan
         , locations = locations

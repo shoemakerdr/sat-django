@@ -125,24 +125,11 @@ fromReadable loc =
 
 
 -- DECODERS
-----
--- This will replace the other decodeLocations that returns List Location
---     Need to figure out how to approach model
-----
--- decodeLocations : JD.Value -> Result String (List Location)
--- decodeLocations value =
--- JD.decodeValue locationsDecoder value
 
 
-decodeLocations : JD.Value -> List Location
+decodeLocations : JD.Value -> Result String (List Location)
 decodeLocations value =
-    case JD.decodeValue locationsDecoder value of
-        Ok locations ->
-            locations
-
-        -- probably shouldn't Debug.crash
-        Err err ->
-            Debug.crash err
+    JD.decodeValue locationsDecoder value
 
 
 locationsDecoder : JD.Decoder (List Location)
