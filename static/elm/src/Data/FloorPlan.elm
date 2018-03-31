@@ -2,6 +2,7 @@ module Data.FloorPlan
     exposing
         ( FloorPlan
         , Flag
+        , FloorPlanDataPair
         , floorplan
         , encodeFloorplan
         )
@@ -30,6 +31,10 @@ type alias Flag a =
     { a | locations : JD.Value }
 
 
+type alias FloorPlanDataPair =
+    ( Result String FloorPlan, Result String (List Location) )
+
+
 floorplan : Flag FloorPlan -> FloorPlan
 floorplan flag =
     { id = flag.id
@@ -48,7 +53,7 @@ floorplan flag =
 -- DECODERS
 
 
-decodeFloorplanAndLocations : JD.Value -> ( Result String FloorPlan, Result String (List Location) )
+decodeFloorplanAndLocations : JD.Value -> FloorPlanDataPair
 decodeFloorplanAndLocations value =
     ( decodeFloorplan value, decodeLocations value )
 
