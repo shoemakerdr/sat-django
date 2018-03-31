@@ -10,7 +10,7 @@ import Data.Filter as Filter exposing (Filter)
 import Data.Location as Location exposing (Location)
 import Data.FloorPlan as FloorPlan exposing (FloorPlan)
 import Data.Mode exposing (..)
-import Util exposing ((=>), onClickWithPosition)
+import Util exposing ((=>))
 
 
 type alias Events msg =
