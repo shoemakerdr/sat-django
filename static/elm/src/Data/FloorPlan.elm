@@ -9,7 +9,7 @@ module Data.FloorPlan
 import Json.Decode as JD
 import Json.Encode as JE
 import Json.Decode.Pipeline as Pipeline
-import Data.Location exposing (Location, encodeLocations)
+import Data.Location exposing (Location, encodeLocations, decodeLocations)
 import Util exposing ((=>))
 
 
@@ -46,6 +46,11 @@ floorplan flag =
 
 
 -- DECODERS
+
+
+decodeFloorplanAndLocations : JD.Value -> ( Result String FloorPlan, Result String (List Location) )
+decodeFloorplanAndLocations value =
+    ( decodeFloorplan value, decodeLocations value )
 
 
 decodeFloorplan : JD.Value -> Result String FloorPlan
