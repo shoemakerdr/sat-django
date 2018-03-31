@@ -28,37 +28,22 @@ import Html.Attributes
         , value
         , type_
         )
-import Html.Events
-    exposing
-        ( onClick
-        , onInput
-        , onMouseDown
-        , onMouseEnter
-        , onMouseLeave
-        )
-import Svg exposing (Svg, svg, circle)
-import Svg.Attributes as SvgAttr
-    exposing
-        ( width
-        , height
-        , cx
-        , cy
-        , r
-        , fill
-        , fillOpacity
-        )
+import Html.Events exposing (onClick, onInput, onMouseDown, onMouseEnter, onMouseLeave)
 import Mouse exposing (Position)
 import Keyboard
 import Window exposing (Size)
 import Task
-import Json.Decode as Json
+import Json.Decode as JD
+import Data.Dimensions as Dimensions exposing (Dimensions)
 import Data.FloorPlan as FloorPlan exposing (FloorPlan)
 import Data.Location as Location exposing (Location)
 import Data.Id as Id exposing (Id)
 import Data.Filter as Filter exposing (Filter)
 import Data.Editor.List as LEditor
 import Data.Editor.String as SEditor
-import ToolTip as TT exposing (ToolTip(..))
+import Data.Mode exposing (..)
+import View.SvgMap as SvgMap
+import View.ToolTip as TT exposing (ToolTip(..))
 import Util exposing ((=>), onChange, onClickWithPosition, (@))
 
 
@@ -94,7 +79,7 @@ type alias Flags =
         , name : String
         , owner : Int
         , owner_name : String
-        , locations : Json.Value
+        , locations : JD.Value
         , last_updated : String
         }
     }
@@ -144,32 +129,10 @@ type alias Model =
     }
 
 
-type alias Dimensions =
-    { width : Float
-    , height : Float
-    }
-
-
 type FilterType
     = Name
     | Type
     | IsTrashed
-
-
-type Mode
-    = View
-    | Edit Status
-
-
-type Status
-    = Waiting
-    | Adding
-    | FloorPlanName
-    | Editing
-    | PreparingForMove
-    | Moving
-    | DeleteConfirmation
-    | InvalidLocation
 
 
 type FilterMsg
@@ -182,7 +145,8 @@ type FilterMsg
 
 
 type Msg
-    = NameInputChange String
+    = NoOp
+    | NameInputChange String
     | TypeSelectChange String
     | ResetFilterForm
     | ShowLocationInfo Location
@@ -192,15 +156,10 @@ type Msg
     | BeginEdit
     | CancelEdit
     | SaveEdit
-    | DoEdit EditMsg
-
-
-type EditMsg
-    = NoOp
     | EditFloorPlanName
-    | ChangeFloorPlanName String
     | SaveFloorPlanName
     | CancelFloorPlanName
+    | FloorPlanNameChange String
     | OpenToolTipEditor (Maybe Location) Position
     | SaveToolTipEditor
     | CancelToolTipEditor
@@ -220,6 +179,9 @@ type EditMsg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        NoOp ->
+            model ! []
+
         NameInputChange name ->
             let
                 filterMsg =
@@ -285,7 +247,7 @@ update msg model =
                 ! []
 
         ResizeFloorplan size ->
-            { model | floorplanDimensions = Just <| getFloorplanDimensions size model.floorplan } ! []
+            { model | floorplanDimensions = Just <| Dimensions.get 0.7 size model.floorplan.aspect_ratio } ! []
 
         BeginEdit ->
             { model | mode = Edit Waiting } ! []
@@ -319,20 +281,10 @@ update msg model =
                 }
                     ! []
 
-        DoEdit editMsg ->
-            updateEditor editMsg model
-
-
-updateEditor : EditMsg -> Model -> ( Model, Cmd Msg )
-updateEditor editMsg model =
-    case editMsg of
-        NoOp ->
-            model ! []
-
         EditFloorPlanName ->
             { model | mode = Edit FloorPlanName } ! []
 
-        ChangeFloorPlanName name ->
+        FloorPlanNameChange name ->
             { model | floorplanEditor = SEditor.edit name model.floorplanEditor } ! []
 
         SaveFloorPlanName ->
@@ -409,7 +361,7 @@ updateEditor editMsg model =
                 | mode = Edit PreparingForMove
                 , toolTip = TT.hide model.toolTip
             }
-                ! [ Task.perform (\_ -> DoEdit CanSetMove) (Task.succeed ()) ]
+                ! [ Task.perform (\_ -> CanSetMove) (Task.succeed ()) ]
 
         CanSetMove ->
             { model | mode = Edit Moving } ! []
@@ -540,17 +492,6 @@ validateLocationOnSave model =
                 { model | mode = Edit InvalidLocation } ! []
 
 
-getFloorplanDimensions : Size -> FloorPlan -> Dimensions
-getFloorplanDimensions size floorplan =
-    let
-        width =
-            0.7 * (toFloat size.width)
-    in
-        { width = width
-        , height = width * floorplan.aspect_ratio
-        }
-
-
 filterByName : String -> Location -> Bool
 filterByName name location =
     String.contains (String.toLower name) (String.toLower location.name)
@@ -581,6 +522,36 @@ updateFilter filterMsg filter model =
 
 
 -- VIEW
+
+
+svgMapEvents : Mode -> { mapEvents : List (Attribute Msg), locationEvents : Location -> List (Attribute Msg) }
+svgMapEvents mode =
+    { mapEvents = mapEvents mode
+    , locationEvents = locationEvents mode
+    }
+
+
+mapEvents : Mode -> List (Attribute Msg)
+mapEvents mode =
+    case mode of
+        Edit Waiting ->
+            [ onClickWithPosition (\position -> OpenToolTipEditor Nothing position) ]
+
+        _ ->
+            []
+
+
+locationEvents : Mode -> Location -> List (Attribute Msg)
+locationEvents mode =
+    \location ->
+        case mode of
+            View ->
+                [ onMouseEnter (ShowLocationInfo location)
+                , onMouseLeave HideToolTip
+                ]
+
+            Edit _ ->
+                [ onClickWithPosition (\position -> OpenToolTipEditor (Just location) position) ]
 
 
 view : Model -> Html Msg
@@ -618,7 +589,7 @@ view model =
             , div
                 [ class "floorplan-main-content" ]
                 [ viewFilterPanel model
-                , svgMap model
+                , SvgMap.view (svgMapEvents model.mode) model
                 ]
             , TT.view config (toolTipView) model.toolTip
             ]
@@ -628,11 +599,11 @@ editableFloorPlanName : Model -> Html Msg
 editableFloorPlanName model =
     case model.mode of
         Edit FloorPlanName ->
-            input [ class "floorplan-name-editing", onInput (\name -> DoEdit (ChangeFloorPlanName name)), value (SEditor.current model.floorplanEditor) ] []
+            input [ class "floorplan-name-editing", onInput (\name -> FloorPlanNameChange name), value (SEditor.current model.floorplanEditor) ] []
 
         Edit _ ->
             h1
-                [ class "floorplan-name-editable", onClick (DoEdit EditFloorPlanName) ]
+                [ class "floorplan-name-editable", onClick EditFloorPlanName ]
                 [ text (SEditor.saved model.floorplanEditor) ]
 
         _ ->
@@ -658,107 +629,6 @@ viewEditorPanel { mode } =
                 , div [] []
                 ]
             ]
-
-
-svgMap : Model -> Html Msg
-svgMap model =
-    let
-        clickEvents =
-            case model.mode of
-                Edit Waiting ->
-                    [ onClickWithPosition (\position -> DoEdit (OpenToolTipEditor Nothing position)) ]
-
-                _ ->
-                    []
-    in
-        case model.floorplanDimensions of
-            Nothing ->
-                div [] []
-
-            Just dims ->
-                div [ class "floorplan-map-wrapper" ]
-                    [ svg
-                        ([ id "svg"
-                         , width <| toString dims.width
-                         , height <| toString dims.height
-                         , style
-                            [ "background" => ("url(" ++ "http://localhost:8000" ++ model.floorplan.image ++ ")")
-                            , "backgroundSize" => "100% auto"
-                            , "backgroundRepeat" => "no-repeat"
-                            ]
-                         ]
-                            ++ clickEvents
-                        )
-                      <|
-                        plotLocations dims model
-                    ]
-
-
-plotLocations : Dimensions -> Model -> List (Html Msg)
-plotLocations dimensions model =
-    let
-        filteredLocations =
-            Filter.apply model.filters (LEditor.list model.locationEditor)
-
-        locations =
-            case model.mode of
-                View ->
-                    filteredLocations
-
-                Edit _ ->
-                    case LEditor.current model.locationEditor of
-                        Nothing ->
-                            filteredLocations
-
-                        Just l ->
-                            List.filter (not << (Location.equal l)) filteredLocations
-
-        current =
-            case model.mode of
-                View ->
-                    [ circle [ SvgAttr.visibility "collapse" ] [] ]
-
-                Edit _ ->
-                    LEditor.current model.locationEditor
-                        |> Maybe.map
-                            (\location ->
-                                [ viewCircle "#FF0000" "editing-location-point" model.mode dimensions location ]
-                            )
-                        |> Maybe.withDefault []
-    in
-        locations
-            |> List.map
-                (\location ->
-                    viewCircle "#72acdc" "location-point" model.mode dimensions location
-                )
-            |> (++) current
-
-
-viewCircle : String -> String -> Mode -> Dimensions -> Location -> Svg Msg
-viewCircle color className mode dimensions location =
-    circle
-        ([ SvgAttr.class className
-         , cx (toString <| location.position_x * dimensions.width)
-         , cy (toString <| location.position_y * dimensions.height)
-         , r "8"
-         , fill color
-         , fillOpacity "0.5"
-         ]
-            ++ locationEvents mode location
-        )
-        []
-
-
-locationEvents : Mode -> Location -> List (Attribute Msg)
-locationEvents mode location =
-    case mode of
-        View ->
-            [ onMouseEnter (ShowLocationInfo location)
-            , onMouseLeave HideToolTip
-            ]
-
-        Edit _ ->
-            [ onClickWithPosition (\position -> DoEdit (OpenToolTipEditor (Just location) position)) ]
 
 
 viewShowToolTip : Location -> Html Msg
@@ -794,15 +664,15 @@ viewEditToolTip location =
             Location.extensionToString location.extension
     in
         div [ class "tooltip-editor" ]
-            [ input [ placeholder "Name", value location.name, onInput (\s -> DoEdit (ChangeName s)) ] []
-            , select [ class "form-select-type", onChange (\s -> DoEdit (ChangeType s)) ] <| optionList (Location.fromAbbr location.loc_type) False
-            , input [ placeholder "Details", value location.details, onInput (\s -> DoEdit (ChangeDetails s)) ] []
-            , input [ placeholder "Extension", value extension, onInput (\s -> DoEdit (ChangeExtension s)) ] []
+            [ input [ placeholder "Name", value location.name, onInput (\s -> ChangeName s) ] []
+            , select [ class "form-select-type", onChange (\s -> ChangeType s) ] <| optionList (Location.fromAbbr location.loc_type) False
+            , input [ placeholder "Details", value location.details, onInput (\s -> ChangeDetails s) ] []
+            , input [ placeholder "Extension", value extension, onInput (\s -> ChangeExtension s) ] []
             , div [ class "tooltip-editor-buttons" ]
-                [ button [ onClick (DoEdit SaveToolTipEditor) ] [ text "Save" ]
-                , button [ onClick (DoEdit ReadyToMove) ] [ text "Move" ]
-                , button [ class "delete-button", onClick (DoEdit ReadyToDelete) ] [ text "Delete" ]
-                , button [ onClick (DoEdit CancelToolTipEditor) ] [ text "Cancel" ]
+                [ button [ onClick SaveToolTipEditor ] [ text "Save" ]
+                , button [ onClick ReadyToMove ] [ text "Move" ]
+                , button [ class "delete-button", onClick ReadyToDelete ] [ text "Delete" ]
+                , button [ onClick CancelToolTipEditor ] [ text "Cancel" ]
                 ]
             ]
 
@@ -814,8 +684,8 @@ viewDeleteToolTip location =
         , div []
             [ p [ class "delete-warning" ] [ text ("Are you sure you want to delete " ++ location.name ++ "?") ]
             , div [ class "tooltip-editor-buttons" ]
-                [ button [ class "delete-button", onClick (DoEdit DeleteLocation) ] [ text "Yes" ]
-                , button [ onClick (DoEdit CancelDelete) ] [ text "Cancel" ]
+                [ button [ class "delete-button", onClick DeleteLocation ] [ text "Yes" ]
+                , button [ onClick CancelDelete ] [ text "Cancel" ]
                 ]
             ]
         ]
@@ -948,8 +818,8 @@ subscriptions model =
 
         Edit Moving ->
             Sub.batch
-                [ Mouse.clicks (\x -> DoEdit (GetNewPosition x))
-                , coordinates (\c -> DoEdit (SetNewPosition c))
+                [ Mouse.clicks (\x -> GetNewPosition x)
+                , coordinates (\c -> SetNewPosition c)
                 ]
 
         Edit FloorPlanName ->
@@ -958,17 +828,17 @@ subscriptions model =
                     (\keyCode ->
                         case keyCode of
                             13 ->
-                                DoEdit SaveFloorPlanName
+                                SaveFloorPlanName
 
                             27 ->
-                                DoEdit CancelFloorPlanName
+                                CancelFloorPlanName
 
                             _ ->
-                                DoEdit NoOp
+                                NoOp
                     )
                 ]
 
         Edit _ ->
             Sub.batch
-                [ coordinates (\c -> DoEdit (SetNewPosition c))
+                [ coordinates (\c -> SetNewPosition c)
                 ]
