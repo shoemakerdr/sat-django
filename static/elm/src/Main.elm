@@ -732,15 +732,7 @@ optionList : String -> Bool -> List (Html Msg)
 optionList typeSelected hasInitialOption =
     let
         options =
-            [ "Desk"
-            , "Office"
-            , "Conference Room"
-            , "Common Area"
-            , "Restroom"
-            , "Public Area"
-            , "Private Area"
-            , "Miscellaneous"
-            ]
+            Location.readableTypes
 
         initialOption =
             if hasInitialOption then

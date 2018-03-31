@@ -5,6 +5,8 @@ module Data.Location
         , equal
         , isValid
         , typeFromString
+        , readableTypes
+        , abbrTypes
         , fromAbbr
         , fromReadable
         , extensionToString
@@ -67,32 +69,42 @@ isValid location =
     location.name /= ""
 
 
+readableTypes : List String
+readableTypes =
+    [ "Desk"
+    , "Office"
+    , "Conference Room"
+    , "Common Area"
+    , "Restroom"
+    , "Public Area"
+    , "Private Area"
+    , "Miscellaneous"
+    ]
+
+
+abbrTypes : List String
+abbrTypes =
+    [ "DESK"
+    , "OFFICE"
+    , "CONFR"
+    , "COMMON"
+    , "RESTROOM"
+    , "PUBLIC"
+    , "PRIVATE"
+    , "MISC"
+    ]
+
+
 abbrToReadable : Dict String String
 abbrToReadable =
-    Dict.fromList
-        [ ( "DESK", "Desk" )
-        , ( "OFFICE", "Office" )
-        , ( "CONFR", "Conference Room" )
-        , ( "COMMON", "Common Area" )
-        , ( "RESTROOM", "Restroom" )
-        , ( "PUBLIC", "Public Area" )
-        , ( "PRIVATE", "Private Area" )
-        , ( "MISC", "Miscellaneous" )
-        ]
+    Dict.fromList <|
+        List.map2 (,) abbrTypes readableTypes
 
 
 readableToAbbr : Dict String String
 readableToAbbr =
-    Dict.fromList
-        [ ( "Desk", "DESK" )
-        , ( "Office", "OFFICE" )
-        , ( "Conference Room", "CONFR" )
-        , ( "Common Area", "COMMON" )
-        , ( "Restroom", "RESTROOM" )
-        , ( "Public Area", "PUBLIC" )
-        , ( "Private Area", "PRIVATE" )
-        , ( "Miscellaneous", "MISC" )
-        ]
+    Dict.fromList <|
+        List.map2 (,) readableTypes abbrTypes
 
 
 extensionToString : Maybe Int -> String
