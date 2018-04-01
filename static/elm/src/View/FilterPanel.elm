@@ -1,4 +1,4 @@
-module View.FilterPanel exposing (..)
+module View.FilterPanel exposing (Model, Msg, initialModel, update, view)
 
 import Data.Filter as Filter exposing (Filter)
 import Html exposing (Html, div, h1, text, input, select, option, button, p)
@@ -6,6 +6,7 @@ import Html.Attributes exposing (class, placeholder, value, selected)
 import Html.Events exposing (onInput, onClick)
 import Data.Location as Location exposing (Location)
 import Util exposing (onChange)
+import View.Options as Options
 
 
 -- MODEL
@@ -126,13 +127,13 @@ view locations model =
     in
         div [ class "location-filter-wrapper" ]
             [ h1 [ class "location-title" ] [ text "Locations" ]
-            , form model.nameInput model.typeSelect
-            , div [ class "location-list" ] <| locationInfoList locations
+            , viewForm model.nameInput model.typeSelect
+            , div [ class "location-list" ] <| locationInfoList filteredLocations
             ]
 
 
-form : String -> String -> Html Msg
-form nameInput typeSelected =
+viewForm : String -> String -> Html Msg
+viewForm nameInput typeSelected =
     div []
         [ input
             [ class "form-name-input"
@@ -141,33 +142,9 @@ form nameInput typeSelected =
             , onInput NameInputChange
             ]
             []
-        , select [ class "form-select-type", onChange TypeSelectChange ] <| viewOptions typeSelected True
+        , select [ class "form-select-type", onChange TypeSelectChange ] <| Options.view typeSelected True
         , button [ onClick ResetFilterForm ] [ text "Reset filter" ]
         ]
-
-
-viewOptions : String -> Bool -> List (Html Msg)
-viewOptions typeSelected hasInitialOption =
-    let
-        opts =
-            Location.readableTypes
-
-        initialOption =
-            if hasInitialOption then
-                option
-                    [ selected <| typeSelected == Location.noSelection ]
-                    [ text Location.noSelection ]
-                    :: []
-            else
-                []
-    in
-        (++) initialOption
-            (opts
-                |> List.map
-                    (\opt ->
-                        option [ selected <| typeSelected == opt ] [ text opt ]
-                    )
-            )
 
 
 locationInfoList : List Location -> List (Html Msg)
