@@ -11,6 +11,7 @@ import Data.Location as Location exposing (Location)
 import Data.FloorPlan as FloorPlan exposing (FloorPlan)
 import Data.Mode exposing (..)
 import Util exposing ((=>))
+import View.FilterPanel as FilterPanel
 
 
 type alias Events msg =
@@ -19,17 +20,17 @@ type alias Events msg =
     }
 
 
-type alias Model m t =
+type alias Model m =
     { m
         | floorplanDimensions : Maybe Dimensions
         , floorplan : FloorPlan
         , mode : Mode
         , locationEditor : LEditor.Editor Location
-        , filters : List (Filter t Location)
+        , filterPanel : FilterPanel.Model
     }
 
 
-view : Events msg -> Model m t -> Html msg
+view : Events msg -> Model m -> Html msg
 view { mapEvents, locationEvents } model =
     case model.floorplanDimensions of
         Nothing ->
@@ -54,11 +55,11 @@ view { mapEvents, locationEvents } model =
                 ]
 
 
-plotLocations : (Location -> List (Attribute msg)) -> Dimensions -> Model m t -> List (Html msg)
+plotLocations : (Location -> List (Attribute msg)) -> Dimensions -> Model m -> List (Html msg)
 plotLocations events dimensions model =
     let
         filteredLocations =
-            Filter.apply model.filters (LEditor.list model.locationEditor)
+            Filter.apply model.filterPanel.filters (LEditor.list model.locationEditor)
 
         locations =
             case model.mode of
