@@ -136,13 +136,13 @@ update msg model =
         NoOp ->
             model ! []
 
-        FilterPanelMsg filterPanelMsg ->
+        FilterPanelMsg panelMsg ->
             let
                 { filterPanel } =
                     model
             in
                 { model
-                    | filterPanel = "new filter panel" @ FilterPanel.update filterPanelMsg filterPanel
+                    | filterPanel = FilterPanel.update panelMsg filterPanel
                 }
                     ! []
 
