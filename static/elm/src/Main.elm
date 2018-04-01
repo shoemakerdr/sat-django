@@ -57,11 +57,6 @@ main =
         }
 
 
-isTrashedFilter : Filter FilterType Location
-isTrashedFilter =
-    (Filter.new IsTrashed (not << .is_trashed))
-
-
 type alias Flags =
     { token : String
     , user : String
@@ -116,10 +111,8 @@ init flags =
 type alias Model =
     { floorplan : FloorPlan
     , locations : List Location
-    , filterNameInput : String
-    , filterTypeSelect : String
     , toolTip : ToolTip
-    , filters : List (Filter FilterType Location)
+    , filterPanel : FilterPanel.Model
     , floorplanDimensions : Maybe Dimensions
     , token : String
     , user : String
@@ -130,26 +123,12 @@ type alias Model =
     }
 
 
-type FilterType
-    = Name
-    | Type
-    | IsTrashed
-
-
-type FilterMsg
-    = Merge
-    | Remove
-
-
 
 -- UPDATE
 
 
 type Msg
     = NoOp
-    | NameInputChange String
-    | TypeSelectChange String
-    | ResetFilterForm
     | ShowLocationInfo Location
     | ShowToolTip (Maybe Position)
     | HideToolTip
@@ -182,36 +161,6 @@ update msg model =
     case msg of
         NoOp ->
             model ! []
-
-        NameInputChange name ->
-            let
-                filterMsg =
-                    case name of
-                        "" ->
-                            Remove
-
-                        _ ->
-                            Merge
-            in
-                updateFilter filterMsg (Filter.new Name (filterByName name)) { model | filterNameInput = name }
-
-        TypeSelectChange locationType ->
-            let
-                filterMsg =
-                    if locationType == Location.noSelection then
-                        Remove
-                    else
-                        Merge
-            in
-                updateFilter filterMsg (Filter.new Type (filterByType locationType)) { model | filterTypeSelect = locationType }
-
-        ResetFilterForm ->
-            { model
-                | filterNameInput = ""
-                , filterTypeSelect = Location.noSelection
-                , filters = [ isTrashedFilter ]
-            }
-                ! []
 
         ShowLocationInfo location ->
             let
@@ -493,34 +442,6 @@ validateLocationOnSave model =
                 { model | mode = Edit InvalidLocation } ! []
 
 
-filterByName : String -> Location -> Bool
-filterByName name location =
-    String.contains (String.toLower name) (String.toLower location.name)
-
-
-filterByType : String -> Location -> Bool
-filterByType locationType location =
-    let
-        locType =
-            Location.fromReadable locationType
-    in
-        locType == location.loc_type
-
-
-updateFilter : FilterMsg -> Filter FilterType Location -> Model -> ( Model, Cmd Msg )
-updateFilter filterMsg filter model =
-    { model
-        | filters =
-            case filterMsg of
-                Remove ->
-                    Filter.remove filter model.filters
-
-                Merge ->
-                    Filter.merge filter model.filters
-    }
-        ! []
-
-
 
 -- VIEW
 
@@ -698,85 +619,6 @@ viewValidationToolTip location =
         [ viewEditToolTip location
         , div [ class "validation-error" ] [ text "Location must be have a name." ]
         ]
-
-
-viewFilterPanel : Model -> Html Msg
-viewFilterPanel model =
-    let
-        locations =
-            Filter.apply model.filters (LEditor.list model.locationEditor)
-    in
-        div [ class "location-filter-wrapper" ]
-            [ h1 [ class "location-title" ] [ text "Locations" ]
-            , filterForm model.filterNameInput model.filterTypeSelect
-            , div [ class "location-list" ] <| locationInfoList locations
-            ]
-
-
-filterForm : String -> String -> Html Msg
-filterForm nameInput typeSelected =
-    div []
-        [ input
-            [ class "form-name-input"
-            , placeholder "Filter by name"
-            , value nameInput
-            , onInput NameInputChange
-            ]
-            []
-        , select [ class "form-select-type", onChange TypeSelectChange ] <| optionList typeSelected True
-        , button [ onClick ResetFilterForm ] [ text "Reset filter" ]
-        ]
-
-
-optionList : String -> Bool -> List (Html Msg)
-optionList typeSelected hasInitialOption =
-    let
-        options =
-            Location.readableTypes
-
-        initialOption =
-            if hasInitialOption then
-                option
-                    [ selected <| isTypeSelected typeSelected Location.noSelection ]
-                    [ text Location.noSelection ]
-                    :: []
-            else
-                []
-    in
-        (++) initialOption
-            (options
-                |> List.map
-                    (\opt ->
-                        option [ selected <| isTypeSelected typeSelected opt ] [ text opt ]
-                    )
-            )
-
-
-isTypeSelected : String -> String -> Bool
-isTypeSelected typeSelected t =
-    typeSelected == t
-
-
-locationInfoList : List Location -> List (Html Msg)
-locationInfoList locations =
-    locations
-        |> List.map
-            (\location ->
-                let
-                    locationType =
-                        Location.fromAbbr location.loc_type
-
-                    extension =
-                        Location.extensionToString location.extension
-
-                    extString =
-                        if extension == "" then
-                            ""
-                        else
-                            ", ext. " ++ extension
-                in
-                    p [ class "location-list-info" ] [ text <| location.name ++ " - " ++ locationType ++ extString ]
-            )
 
 
 
