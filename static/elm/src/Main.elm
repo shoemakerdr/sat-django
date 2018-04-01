@@ -1,50 +1,25 @@
 port module Main exposing (..)
 
-import Html
-    exposing
-        ( Html
-        , Attribute
-        , div
-        , text
-        , p
-        , h1
-        , strong
-        , button
-        , form
-        , input
-        , select
-        , option
-        )
-import Html.Attributes
-    exposing
-        ( src
-        , alt
-        , class
-        , id
-        , style
-        , disabled
-        , selected
-        , placeholder
-        , value
-        , type_
-        )
-import Html.Events exposing (onClick, onInput, onMouseDown, onMouseEnter, onMouseLeave)
-import Mouse exposing (Position)
-import Keyboard
-import Window exposing (Size)
-import Task
-import Json.Decode as JD
 import Data.Dimensions as Dimensions exposing (Dimensions)
 import Data.FloorPlan as FloorPlan exposing (FloorPlan)
 import Data.Location as Location exposing (Location)
 import Data.Id as Id exposing (Id)
-import Data.Filter as Filter exposing (Filter)
 import Data.Editor.List as LEditor
 import Data.Editor.String as SEditor
 import Data.Mode exposing (..)
+import Html exposing (Html, Attribute, div, text, p, h1, strong, button, input, select)
+import Html.Attributes exposing (src, class, id, style, placeholder, value, type_)
+import Html.Events exposing (onClick, onInput, onMouseDown, onMouseEnter, onMouseLeave)
+import Json.Decode as JD
+import Keyboard
+import Mouse exposing (Position)
+import Task
+import Util exposing ((=>), onChange, onClickWithPosition, (@))
+import View.FilterPanel as FilterPanel
+import View.Options as Options
 import View.SvgMap as SvgMap
 import View.ToolTip as TT exposing (ToolTip(..))
-import Util exposing ((=>), onChange, onClickWithPosition, (@))
+import Window exposing (Size)
 
 
 main : Program Flags Model Msg
@@ -89,10 +64,8 @@ init flags =
     in
         { floorplan = FloorPlan.floorplan flags.floorplan
         , locations = locations
-        , filterNameInput = ""
-        , filterTypeSelect = Location.noSelection
+        , filterPanel = FilterPanel.initialModel
         , toolTip = Hidden Nothing
-        , filters = [ isTrashedFilter ]
         , floorplanDimensions = Nothing
         , token = flags.token
         , user = flags.user
@@ -129,6 +102,7 @@ type alias Model =
 
 type Msg
     = NoOp
+    | FilterPanelMsg FilterPanel.Msg
     | ShowLocationInfo Location
     | ShowToolTip (Maybe Position)
     | HideToolTip
@@ -161,6 +135,16 @@ update msg model =
     case msg of
         NoOp ->
             model ! []
+
+        FilterPanelMsg filterPanelMsg ->
+            let
+                { filterPanel } =
+                    model
+            in
+                { model
+                    | filterPanel = "new filter panel" @ FilterPanel.update filterPanelMsg filterPanel
+                }
+                    ! []
 
         ShowLocationInfo location ->
             let
@@ -371,12 +355,22 @@ update msg model =
         ChangeExtension extension ->
             let
                 ext =
-                    case String.toInt extension of
-                        Ok x ->
-                            Just x
-
-                        Err _ ->
+                    case extension of
+                        "" ->
                             Nothing
+
+                        _ ->
+                            case String.toInt extension of
+                                Ok x ->
+                                    Just x
+
+                                Err _ ->
+                                    case LEditor.current model.locationEditor of
+                                        Nothing ->
+                                            Nothing
+
+                                        Just location ->
+                                            location.extension
 
                 newEditor =
                     LEditor.newWithDefault
@@ -510,7 +504,8 @@ view model =
                     []
             , div
                 [ class "floorplan-main-content" ]
-                [ viewFilterPanel model
+                [ FilterPanel.view model.locations model.filterPanel
+                    |> Html.map FilterPanelMsg
                 , SvgMap.view (svgMapEvents model.mode) model
                 ]
             , TT.view config (toolTipView) model.toolTip
@@ -587,7 +582,7 @@ viewEditToolTip location =
     in
         div [ class "tooltip-editor" ]
             [ input [ placeholder "Name", value location.name, onInput (\s -> ChangeName s) ] []
-            , select [ class "form-select-type", onChange (\s -> ChangeType s) ] <| optionList (Location.fromAbbr location.loc_type) False
+            , select [ class "form-select-type", onChange (\s -> ChangeType s) ] <| Options.view (Location.fromAbbr location.loc_type) False
             , input [ placeholder "Details", value location.details, onInput (\s -> ChangeDetails s) ] []
             , input [ placeholder "Extension", value extension, onInput (\s -> ChangeExtension s) ] []
             , div [ class "tooltip-editor-buttons" ]
