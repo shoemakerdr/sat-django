@@ -5,12 +5,13 @@ module Data.FloorPlan
         , FloorPlanDataPair
         , floorplan
         , encodeFloorplan
+        , dataPairDecoder
         )
 
 import Json.Decode as JD
 import Json.Encode as JE
 import Json.Decode.Pipeline as Pipeline
-import Data.Location exposing (Location, encodeLocations, decodeLocations)
+import Data.Location exposing (Location, encodeLocations, decodeLocations, locationsFromFieldDecoder)
 import Util exposing ((=>))
 
 
@@ -31,10 +32,6 @@ type alias Flag a =
     { a | locations : JD.Value }
 
 
-type alias FloorPlanDataPair =
-    ( Result String FloorPlan, Result String (List Location) )
-
-
 floorplan : Flag FloorPlan -> FloorPlan
 floorplan flag =
     { id = flag.id
@@ -53,14 +50,13 @@ floorplan flag =
 -- DECODERS
 
 
-decodeFloorplanAndLocations : JD.Value -> FloorPlanDataPair
-decodeFloorplanAndLocations value =
-    ( decodeFloorplan value, decodeLocations value )
+type alias FloorPlanDataPair =
+    ( FloorPlan, List Location )
 
 
-decodeFloorplan : JD.Value -> Result String FloorPlan
-decodeFloorplan value =
-    JD.decodeValue floorplanDecoder value
+dataPairDecoder : JD.Decoder FloorPlanDataPair
+dataPairDecoder =
+    JD.map2 (,) floorplanDecoder locationsFromFieldDecoder
 
 
 floorplanDecoder : JD.Decoder FloorPlan
