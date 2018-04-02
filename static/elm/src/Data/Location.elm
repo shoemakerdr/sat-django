@@ -11,6 +11,8 @@ module Data.Location
         , fromReadable
         , extensionToString
         , noSelection
+        , locationsDecoder
+        , locationsFromFieldDecoder
         , decodeLocations
         , encodeLocations
         )
@@ -148,6 +150,11 @@ noSelection =
 decodeLocations : JD.Value -> Result String (List Location)
 decodeLocations value =
     JD.decodeValue locationsDecoder value
+
+
+locationsFromFieldDecoder : JD.Decoder (List Location)
+locationsFromFieldDecoder =
+    JD.field "locations" locationsDecoder
 
 
 locationsDecoder : JD.Decoder (List Location)
