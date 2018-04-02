@@ -1,7 +1,7 @@
 port module Main exposing (..)
 
 import Data.Dimensions as Dimensions exposing (Dimensions)
-import Data.FloorPlan as FloorPlan exposing (FloorPlan)
+import Data.FloorPlan as FloorPlan exposing (FloorPlan, FloorPlanDataPair)
 import Data.Location as Location exposing (Location)
 import Data.Id as Id exposing (Id)
 import Data.Editor.List as LEditor
@@ -10,9 +10,11 @@ import Data.Mode exposing (..)
 import Html exposing (Html, Attribute, div, text, p, h1, strong, button, input, select)
 import Html.Attributes exposing (src, class, id, style, placeholder, value, type_)
 import Html.Events exposing (onClick, onInput, onMouseDown, onMouseEnter, onMouseLeave)
+import Http
 import Json.Decode as JD
 import Keyboard
 import Mouse exposing (Position)
+import Request
 import Task
 import Util exposing ((=>), onChange, onClickWithPosition, (@))
 import View.FilterPanel as FilterPanel
@@ -102,6 +104,7 @@ type alias Model =
 
 type Msg
     = NoOp
+    | HandleHttpData (Result Http.Error FloorPlanDataPair)
     | FilterPanelMsg FilterPanel.Msg
     | ShowLocationInfo Location
     | ShowToolTip (Maybe Position)
@@ -135,6 +138,9 @@ update msg model =
     case msg of
         NoOp ->
             model ! []
+
+        HandleHttpData data ->
+            updateWithData data model
 
         FilterPanelMsg panelMsg ->
             let
@@ -213,7 +219,7 @@ update msg model =
                     , mode = View
                     , locationEditor = LEditor.editor newLocations
                 }
-                    ! []
+                    ! [ Request.saveDataPair model.token newFloorplan newLocations HandleHttpData ]
 
         EditFloorPlanName ->
             { model | mode = Edit FloorPlanName } ! []
@@ -434,6 +440,24 @@ validateLocationOnSave model =
                         ! []
             else
                 { model | mode = Edit InvalidLocation } ! []
+
+
+updateWithData : Result Http.Error FloorPlanDataPair -> Model -> ( Model, Cmd Msg )
+updateWithData data model =
+    case data of
+        Ok ( floorplan, locations ) ->
+            { model
+                | floorplan = floorplan
+                , locations = locations
+            }
+                ! []
+
+        Err err ->
+            let
+                e =
+                    "THERE WAS AN ERROR!!!" @ err
+            in
+                model ! []
 
 
 
