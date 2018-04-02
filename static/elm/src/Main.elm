@@ -449,6 +449,8 @@ updateWithData data model =
             { model
                 | floorplan = floorplan
                 , locations = locations
+                , locationEditor = LEditor.editor locations
+                , floorplanEditor = SEditor.editor floorplan.name
             }
                 ! []
 
