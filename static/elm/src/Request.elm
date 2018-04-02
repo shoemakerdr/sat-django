@@ -1,18 +1,18 @@
-module Request exposing (createChangeRequest)
+module Request exposing (saveDataPair)
 
 import Data.FloorPlan
     exposing
         ( FloorPlan
         , FloorPlanDataPair
         , encodeFloorplan
-        , decodeFloorplanAndLocations
+        , dataPairDecoder
         )
 import Data.Location exposing (Location)
 import Http
 import HttpBuilder
     exposing
         ( RequestBuilder
-        , withHeaders
+        , withHeader
         , withJsonBody
         , withTimeout
         , withExpect
@@ -24,26 +24,20 @@ type alias Token =
     String
 
 
-type alias DataPairHandler =
+type alias DataPairHandler msg =
     Result Http.Error FloorPlanDataPair -> msg
 
 
-post : Token -> FloorPlan -> List Location -> Http.Request FloorPlanDataPair
-post token floorplan locations =
-    HttpBuilder.post <|
-        createApiUrl floorplan.id
-            |> withHeader "X-CSRFToken" token
-            |> withJsonBody (encodeFloorplan floorplan locations)
-            |> withTimeout (10 * Time.second)
-            |> withExpect (Http.expectJson decodeFloorplanAndLocations)
-            |> HttpBuilder.toRequest
-
-
-send : DataPairHandler -> Http.Request FloorPlanDataPair -> Cmd msg
-send handler request =
-    Http.send handler request
+saveDataPair : Token -> FloorPlan -> List Location -> DataPairHandler msg -> Cmd msg
+saveDataPair token floorplan locations handler =
+    HttpBuilder.post (createApiUrl floorplan.id)
+        |> withHeader "X-CSRFToken" token
+        |> withJsonBody (encodeFloorplan floorplan locations)
+        |> withTimeout (10 * Time.second)
+        |> withExpect (Http.expectJson dataPairDecoder)
+        |> HttpBuilder.send handler
 
 
 createApiUrl : Int -> String
 createApiUrl id =
-    "/api/floorplan/" ++ (toString id)
+    "http://localhost:8000/api/floorplans/" ++ (toString id) ++ "/"
