@@ -17,6 +17,7 @@ import Mouse exposing (Position)
 import Request
 import Task
 import Util exposing ((=>), onChange, onClickWithPosition, (@))
+import View.Error as Error
 import View.FilterPanel as FilterPanel
 import View.Options as Options
 import View.SvgMap as SvgMap
@@ -75,6 +76,7 @@ init flags =
         , mode = View
         , locationEditor = LEditor.editor locations
         , floorplanEditor = SEditor.editor flags.floorplan.name
+        , errorStatus = Nothing
         }
             ! [ Task.perform ResizeFloorplan Window.size ]
 
@@ -95,6 +97,7 @@ type alias Model =
     , mode : Mode
     , locationEditor : LEditor.Editor Location
     , floorplanEditor : SEditor.Editor
+    , errorStatus : Maybe Http.Error
     }
 
 
@@ -105,6 +108,7 @@ type alias Model =
 type Msg
     = NoOp
     | HandleHttpData (Result Http.Error FloorPlanDataPair)
+    | RetryRequest
     | FilterPanelMsg FilterPanel.Msg
     | ShowLocationInfo Location
     | ShowToolTip (Maybe Position)
@@ -141,6 +145,13 @@ update msg model =
 
         HandleHttpData data ->
             updateWithData data model
+
+        RetryRequest ->
+            let
+                { token, floorplan, locations } =
+                    model
+            in
+                model ! [ Request.saveDataPair token floorplan locations HandleHttpData ]
 
         FilterPanelMsg panelMsg ->
             let
@@ -451,15 +462,12 @@ updateWithData data model =
                 , locations = locations
                 , locationEditor = LEditor.editor locations
                 , floorplanEditor = SEditor.editor floorplan.name
+                , errorStatus = Nothing
             }
                 ! []
 
         Err err ->
-            let
-                e =
-                    "THERE WAS AN ERROR!!!" @ err
-            in
-                model ! []
+            { model | errorStatus = Just err } ! []
 
 
 
@@ -496,6 +504,11 @@ locationEvents mode =
                 [ onClickWithPosition (\position -> OpenToolTipEditor (Just location) position) ]
 
 
+errorEvents : { onRetry : Msg }
+errorEvents =
+    { onRetry = RetryRequest }
+
+
 view : Model -> Html Msg
 view model =
     let
@@ -522,7 +535,8 @@ view model =
             TT.config 10 10 "tooltip-wrapper" []
     in
         div []
-            [ editableFloorPlanName model
+            [ Error.view errorEvents model
+            , editableFloorPlanName model
             , div [] <|
                 if model.isOwner then
                     viewEditorPanel model
