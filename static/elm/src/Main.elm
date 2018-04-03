@@ -652,7 +652,7 @@ viewValidationToolTip : Location -> Html Msg
 viewValidationToolTip location =
     div []
         [ viewEditToolTip location
-        , div [ class "validation-error" ] [ text "Location must be have a name." ]
+        , div [ class "error" ] [ text "Location must be have a name." ]
         ]
 
 

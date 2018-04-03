@@ -1,6 +1,7 @@
 module View.Error exposing (view)
 
 import Html exposing (Html, div, text, button)
+import Html.Attributes exposing (class)
 import Html.Events exposing (onClick)
 import Http exposing (Error(..))
 
@@ -63,14 +64,14 @@ view config { errorStatus } =
 
         Just err ->
             div []
-                [ div [] [ text <| show errorStatus ]
+                [ div [ class "error" ] [ text <| show errorStatus ]
                 , viewRetry config.onRetry
                 ]
 
 
 viewRetry : msg -> Html msg
 viewRetry msg =
-    div []
+    div [ class "error-button-wrapper" ]
         [ button
             [ onClick msg ]
             [ text "Retry" ]

@@ -140,8 +140,17 @@
   margin-right: 8px;
 }
 
-.validation-error {
+.error-panel-wrapper {
+  margin: 16px;
+}
+
+.error {
   margin: 16px 0;
   text-align: center;
   color: red;
+}
+
+.error-button-wrapper { 
+  display: flex;
+  justify-content: center;
 }
