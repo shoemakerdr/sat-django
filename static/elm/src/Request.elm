@@ -40,4 +40,4 @@ saveDataPair token floorplan locations handler =
 
 createApiUrl : Int -> String
 createApiUrl id =
-    "http://localhost:8000/api/floorplans/" ++ (toString id) ++ "/"
+    "/api/floorplans/" ++ (toString id) ++ "/"
