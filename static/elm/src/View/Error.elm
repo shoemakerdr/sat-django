@@ -25,30 +25,34 @@ type alias Config msg =
 errorMessage : Error -> String
 errorMessage err =
     let
-        stdErr =
+        e =
             "There was a error in processing the request! "
     in
         case err of
             BadUrl str ->
-                stdErr
+                e
                     ++ "This wasn't your fault though. "
                     ++ "This was an issue with the url."
-                    ++ "Contact the developer ASAP to fix this issue."
+                    ++ "Contact an admin for immediate assistance."
 
             Timeout ->
-                stdErr ++ "It took too long and timed out. Please check your network connection and try again."
+                e ++ "It took too long and timed out. Please check your network connection and try again."
 
             NetworkError ->
-                stdErr ++ "Check your network connection and try again."
+                e ++ "Check your network connection and try again."
 
             BadStatus res ->
-                stdErr ++ res.body
+                e
+                    ++ "Here's what I know: "
+                    ++ (toString res.status.code)
+                    ++ " "
+                    ++ res.status.message
 
             BadPayload str res ->
-                stdErr
+                e
                     ++ "This wasn't your fault though. "
-                    ++ "Contact the developer ASAP to fix this issue: "
-                    ++ res.body
+                    ++ "The data was not in the correct format. "
+                    ++ "Contact an admin for immediate assistance."
 
 
 show : Maybe Error -> String
@@ -63,7 +67,7 @@ view config { errorStatus } =
             div [] []
 
         Just err ->
-            div []
+            div [ class "error-panel-wrapper" ]
                 [ div [ class "error" ] [ text <| show errorStatus ]
                 , viewRetry config.onRetry
                 ]
