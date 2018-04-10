@@ -544,7 +544,7 @@ view model =
                     []
             , div
                 [ class "floorplan-main-content" ]
-                [ FilterPanel.view model.locations model.filterPanel
+                [ FilterPanel.view (LEditor.list model.locationEditor) model.filterPanel
                     |> Html.map FilterPanelMsg
                 , SvgMap.view (svgMapEvents model.mode) model
                 ]

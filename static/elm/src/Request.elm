@@ -18,6 +18,7 @@ import HttpBuilder
         , withExpect
         )
 import Time
+import Util exposing ((@))
 
 
 type alias Token =
@@ -35,9 +36,10 @@ saveDataPair token floorplan locations handler =
         |> withJsonBody (encodeFloorplan floorplan locations)
         |> withTimeout (10 * Time.second)
         |> withExpect (Http.expectJson dataPairDecoder)
+        |> (@) "NEW POST REQUEST"
         |> HttpBuilder.send handler
 
 
 createApiUrl : Int -> String
 createApiUrl id =
-    "/api/floorplans/" ++ (toString id) ++ "/"
+    "http://localhost:8000/api/floorplans/" ++ (toString id) ++ "/"
