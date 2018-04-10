@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% load staticfiles %}
+
+{% block title %}
+  Edit Floor Plans
+{% endblock %}
+
+{% block content %}
+
+<div>EDIT YOUR FLOOR PLANS</div>
+
+<div>
+  
+{% for form in forms %}
+
+{{ form.as_p}}
+
+{% endfor %}
+
+</div>
+
+{% endblock %}
