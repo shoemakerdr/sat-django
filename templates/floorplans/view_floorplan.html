@@ -17,7 +17,10 @@
   var user= document.querySelectorAll('[name=username]')[0].value
   var floorplan= document.querySelectorAll('[name=floorplan]')[0].value
   var token = document.querySelectorAll('[name=csrfmiddlewaretoken]')[0].value
-  var main = Elm.Main.embed(container, { token: token, user: user, floorplan: JSON.parse( floorplan ) })
+  // Domain used for API. When developing Elm application separately from python backend,
+  // this is "http://localhost:8000". Empty string means same domain as backend.
+  var domain = ""
+  var main = Elm.Main.embed(container, { token: token, user: user, domain: domain, floorplan: JSON.parse( floorplan ) })
 
 
   main.ports.findCoordinates.subscribe(function(position) {
