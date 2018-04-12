@@ -24,15 +24,20 @@
   font-weight: bold;
 }
 
-.editor-panel {
+.button-panel {
   display: flex;
   justify-content: center;
   align-items: center;
-  margin-top: 16px;
+  margin: 16px 0;
 }
 
-.editor-panel > button + button {
+.button-panel > button + button {
   margin-left: 16px;
+}
+
+.deselect {
+  color: red;
+  float: right;
 }
 
 .floorplan-main-content {
@@ -140,17 +145,19 @@
   margin-right: 8px;
 }
 
-.error-panel-wrapper {
-  margin: 16px;
+.individual-selection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
-.error {
+.individual-selection-text {
+  font-size: 20px;
+  color: 2px solid #1c476b;
+}
+
+.validation-error {
   margin: 16px 0;
   text-align: center;
   color: red;
-}
-
-.error-button-wrapper { 
-  display: flex;
-  justify-content: center;
 }
